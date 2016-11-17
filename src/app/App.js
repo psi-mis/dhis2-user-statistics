@@ -17,7 +17,10 @@ import '../translationRegistration';
 
 const HeaderBar = withStateFrom(headerBarStore$, HeaderBarComponent);
 
+let injectTapEventPlugin = require("react-tap-event-plugin");
+injectTapEventPlugin();
 
+//import Installer  from './Install.component.js';
 import Listing  from './Listing.component.js';
 //import Usage    from './Usage.component.js';
 //import Activity from './Activity.component.js';
@@ -90,6 +93,10 @@ export default React.createClass({
         //   return (<Usage d2={d2} />);
         //   break;
 
+        // case "install":
+        //   return (<Installer d2={d2} />);
+        //   break;
+
         //Default page
         default:
           return (<Listing d2={d2} />);
@@ -99,7 +106,8 @@ export default React.createClass({
     render() {
       const d2 = this.props.d2;
       const sections = [
-          { key: 'listing', icon:'people_outline',    label:d2.i18n.getTranslation('app_listing'), },
+        { key: 'listing', icon:'people_outline',    label:d2.i18n.getTranslation('app_listing'), },
+//        { key: 'install', icon:'perm_data_setting',    label:d2.i18n.getTranslation('app_install'), },
 //          { key: 'activity',icon:'person_pin',        label:d2.i18n.getTranslation('app_activity'), },
 //          { key: 'usage',   icon:'track_changes',     label:d2.i18n.getTranslation('app_usage'), },
       ].map(section => ({
