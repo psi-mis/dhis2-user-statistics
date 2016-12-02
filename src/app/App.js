@@ -20,10 +20,12 @@ const HeaderBar = withStateFrom(headerBarStore$, HeaderBarComponent);
 let injectTapEventPlugin = require("react-tap-event-plugin");
 injectTapEventPlugin();
 
-//import Installer  from './Install.component.js';
 import Listing  from './Listing.component.js';
+import Dashboard  from './Dashboard.component.js';
 //import Usage    from './Usage.component.js';
 //import Activity from './Activity.component.js';
+
+const dataStoreNamespace = 'baousertracking';
 
 
 export default React.createClass({
@@ -50,18 +52,20 @@ export default React.createClass({
     },
 
     componentDidMount() {
-        this.subscriptions = [
-            actions.showSnackbarMessage.subscribe(params => {
-                if (!!this.state.snackbar) {
-                    this.setState({ snackbar: undefined });
-                    setTimeout(() => {
-                        this.setState({ snackbar: params.data });
-                    }, 150);
-                } else {
-                    this.setState({ snackbar: params.data });
-                }
-            }),
-        ];
+      const d2 = this.props.d2;
+      const api = d2.Api.getApi();
+      this.subscriptions = [
+          actions.showSnackbarMessage.subscribe(params => {
+              if (!!this.state.snackbar) {
+                  this.setState({ snackbar: undefined });
+                  setTimeout(() => {
+                      this.setState({ snackbar: params.data });
+                  }, 150);
+              } else {
+                  this.setState({ snackbar: params.data });
+              }
+          }),
+      ];
     },
 
     componentWillUnmount() {
@@ -93,9 +97,13 @@ export default React.createClass({
         //   return (<Usage d2={d2} />);
         //   break;
 
-        // case "install":
-        //   return (<Installer d2={d2} />);
-        //   break;
+        case "dashboard":
+          return (<Dashboard d2={d2} />);
+          break;
+
+        case "listing":
+          return (<Listing d2={d2} />);
+          break;
 
         //Default page
         default:
@@ -106,8 +114,8 @@ export default React.createClass({
     render() {
       const d2 = this.props.d2;
       const sections = [
-        { key: 'listing', icon:'people_outline',    label:d2.i18n.getTranslation('app_listing'), },
-//        { key: 'install', icon:'perm_data_setting',    label:d2.i18n.getTranslation('app_install'), },
+        { key: 'listing', icon:'people_outline',      label:d2.i18n.getTranslation('app_listing'), },
+//        { key: 'dashboard', icon:'dashboard',         label:d2.i18n.getTranslation('app_dashboard'), },
 //          { key: 'activity',icon:'person_pin',        label:d2.i18n.getTranslation('app_activity'), },
 //          { key: 'usage',   icon:'track_changes',     label:d2.i18n.getTranslation('app_usage'), },
       ].map(section => ({

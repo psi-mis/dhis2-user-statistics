@@ -1,6 +1,6 @@
 {
   "name": "BAT-app",
-  "version": "0.1.7",
+  "version": "0.1.9",
   "description": "BAO Access Tracking and Auditing App",
   "main": "src/index.html",
   "scripts": {

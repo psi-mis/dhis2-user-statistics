@@ -57,7 +57,7 @@ export default React.createClass({
         d2: React.PropTypes.object,
     },
 
-    //make sure we have our necessary SQL Views
+    //make sure we have our necessary select box data
     componentDidMount() {
       const d2 = this.props.d2;
       const api = d2.Api.getApi();
@@ -104,9 +104,10 @@ export default React.createClass({
           filter:null,
           filterDisabled:false, // hide disabled users
 //          invertFilter:false, // select everyone not in the given params
-//          sqlViews:[],        // cache of sqlViews IDs
           ouRoot:null,        // top of the OU tree, needed for OrgUnitTree
           userGroups:[],      // all user groups, needed for filter
+          searchChildOUs:false,
+          orgChildren:[],     // the children of the selected OU
           urlPath:'',         // server path, needed for user edit link
           processing:false,
           errors:'',
@@ -135,14 +136,42 @@ export default React.createClass({
 
     handleFilterDisabled(event, value){
       this.setState({filterDisabled:value});
-      console.log(value);
     },
 
     //Clicking on the org tree
-    handleSelectedOrgUnit(event, model) {
+    async handleSelectedOrgUnit(event, model) {
       this.setState({
           filter: (model.id === this.state.filter)?null:model.id,
       });
+      let children = await this.getOrgChildren(model.id);
+      this.setState({orgChildren:children});
+    },
+
+    handleFilterChildOUs(event,value) {
+      this.setState({searchChildOUs:value});
+    },
+
+    //recursively find all children of id. return array of IDs
+    async getOrgChildren(id) {
+      const d2 = this.props.d2;
+      let nodes = [id];
+      let m = await d2.models.organisationUnits.get(id);
+      if (m.id===id){
+        if (m.hasOwnProperty('children') && m.children !== undefined){
+          if (m.children.size===0){
+            return nodes;
+          }
+          for (let child of m.children){
+            let c = await this.getOrgChildren(child[0]);
+            nodes = nodes.concat(c);
+          }
+          return nodes;
+        }
+        else{   //other way to get no children
+          return nodes;
+        }
+      }
+      return nodes;
     },
 
     //Clicking on the org tree
@@ -233,49 +262,73 @@ export default React.createClass({
     process(){
       const d2 = this.props.d2;
       const api = d2.Api.getApi();
-      this.setState({processing:true});
+      this.setState({processing:true,data:[]});
 
       //figure out the lastLoginDate as an actual Date
       var lastLoginDate = new Date();
       lastLoginDate.setDate(lastLoginDate.getDate() - this.state.days);
 
-      let data = {
+      let search = {
         fields:'*',
         pageSize:50,
       };
       if (this.state.type==='fresh'){
-        data.lastLogin=lastLoginDate.toISOString().substr(0,10);
+        search.lastLogin=lastLoginDate.toISOString().substr(0,10);
       }
       else if (this.state.type==='stale'){
-        data.inactiveSince=lastLoginDate.toISOString().substr(0,10);
+        search.inactiveSince=lastLoginDate.toISOString().substr(0,10);
       }
       if (this.state.filterBy==='ou' && this.state.filter!==false){
-          data.ou=this.state.filter;
+          search.ou=this.state.filter;
       }
       if (this.state.filterUsername!==''){
-          data.query=this.state.filterUsername;
+          search.query=this.state.filterUsername;
       }
 
-      api.get('users',data).then(promise=>{
-        if (promise.hasOwnProperty('users')){
-          console.log(promise.users);
-
-          this.setState({
-            data:promise.users,
-            processing:false,
+      if (this.state.filterBy==='ou' && this.state.searchChildOUs===true && this.state.orgChildren.length>1){
+        //need to issue multiple queries to get all the children OUs
+        this.getMultiOrgUsers(search,this.state.orgChildren)
+          .then(res=>{
+            this.setState({
+              data:res,
+              processing:false,
+            });
           });
-        }
-        else{
-          this.setState({
-            data:[],
-            processing:false,
-          })
-        }
-      })
-      .catch(error=> {
-        this.setState({processing:false,errors:error});
-      });
+      }
+      else{
+        api.get('users',search).then(promise=>{
+          if (promise.hasOwnProperty('users')){
+            this.setState({
+              data:promise.users,
+              processing:false,
+            });
+          }
+          else{
+            this.setState({
+              data:[],
+              processing:false,
+            })
+          }
+        })
+        .catch(error=> {
+          this.setState({processing:false,errors:error});
+        });
+      }
 
+    },
+
+    async getMultiOrgUsers(search,ous) {
+      const d2 = this.props.d2;
+      const api = d2.Api.getApi();
+      let users = [];
+      for (let ou of ous){
+        search.ou=ou;
+        let s = await api.get('users',search);
+        if (s.hasOwnProperty('users')){
+          users = users.concat(s.users);
+        }
+      }
+      return users;
     },
 
     render() {
@@ -298,6 +351,10 @@ export default React.createClass({
             let found = false;
             for (let g of row.organisationUnits){
               if (g.id === this.state.filter){
+                found = true;
+              }
+              //child OUs
+              if (this.state.searchChildOUs===true && this.state.orgChildren.indexOf(g.id)>=0){
                 found = true;
               }
             }
@@ -388,6 +445,11 @@ export default React.createClass({
                   <Checkbox label="Hide Disabled"
                         checked={this.state.filterDisabled}
                         onCheck={this.handleFilterDisabled}
+                        labelStyle={{color:'grey',fontSize:'small'}}/>
+                  <Checkbox label="Include Child OUs"
+                        checked={this.state.searchChildOUs}
+                        onCheck={this.handleFilterChildOUs}
+                        disabled={this.state.filterBy!='ou'}
                         labelStyle={{color:'grey',fontSize:'small'}}/>
 
                 </div>

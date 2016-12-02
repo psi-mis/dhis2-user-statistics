@@ -9,20 +9,23 @@ Initial Sponsor: [PSI](http://www.psi.org/)
 
 # Features
 
-## Phase 1: Listing (30h)
+## Phase 1: Listing (30h) Complete
 
 * Access: List of users who have logged in during the last X days
 * Stagnation: List of users who have not logged on in the past X days
+* Disabling/Enabling of accounts
 
-## Phase 2: Filtering (40h)
+## Phase 2: Filtering (40h) Complete
 
-* Filtering by OU
-* Filtering by User Group
-* Filtering by not in OU
-* Filtering by not in User Group
+* Filtering by OU             
+* Filtering by User Group     
+* Filtering by not disabled   
+* Filtering by Name           
+* Filtering by OU (rolled up)
 
 ## Phase 3: Usage (40h)
 
+* Infographic % active logins by group by days, color coded
 * Number or status (yes/no) of log-in days within a certain period (eg. user(s) that logged in on at least one day each week).
 
 ## Phase 4: Activity Tracking
@@ -32,17 +35,12 @@ Initial Sponsor: [PSI](http://www.psi.org/)
 
 # TODO
 
-* 1: Access: List of users who have logged in during the last X days
-* 1: Stagnation: List of users who have not logged on in the past X days
-* 2: Filtering by OU
-* 2: Filtering by User Group
-* 2: Filtering by not in OU
-* 2: Filtering by not in User Group
+* 3: Infographic % active logins by group by days, color coded
 * 3: Number or status (yes/no) of log-in days within a certain period (eg. user(s) that logged in on at least one day each week).
 * 4: Most often clicked on item
 * 4: How often using feature X
 
-* Link from user to account management page
+* Link from user to account management page (no)
 * Bulk inactivation
 * Paging of results
 
