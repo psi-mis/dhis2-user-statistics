@@ -56,8 +56,12 @@ module.exports = React.createClass({
     componentWillUnmount() {
         this.chart.destroy();
     },
+
     //Create the div which the chart will be rendered to.
     render: function () {
+      if (Object.keys(this.props.groups).length>0){
         return React.createElement('div', { id: this.props.container });
+      }
+      return null;
     }
 });

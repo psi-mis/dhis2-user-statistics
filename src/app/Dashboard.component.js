@@ -151,7 +151,7 @@ export default React.createClass({
                 <div> {/*  @TODO:: this wont work for installs that have no usergroups */}
                   {Object.keys(this.state.userGroups).length>0?(
                     <ChartLogins container='chart' options={options} groups={this.state.userGroups} />):
-                    <CircularProgress/>
+                    null
                   }
 
                 </div>
