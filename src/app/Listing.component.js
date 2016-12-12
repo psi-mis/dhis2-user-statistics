@@ -51,47 +51,12 @@ export default React.createClass({
 
     propTypes: {
         d2: React.PropTypes.object,
+        groups: React.PropTypes.object.isRequired,
+        ouRoot: React.PropTypes.object.isRequired,
     },
 
     contextTypes: {
         d2: React.PropTypes.object,
-    },
-
-    //make sure we have our necessary select box data
-    componentDidMount() {
-      const d2 = this.props.d2;
-      const api = d2.Api.getApi();
-
-      //get OU tree
-      d2.models.organisationUnits.list({ paging: false, level: 1, fields: 'id,displayName,children::isNotEmpty' })
-          .then(rootLevel => rootLevel.toArray()[0])
-          .then(rootUnit => {
-            this.setState({ouRoot:rootUnit});
-          })
-          .catch(err => console.log(err));
-
-      //get user groups for filtering
-      api.get('/userGroups?paging=false').then(promise=>{
-        if (promise.hasOwnProperty('userGroups')){
-          this.setState({
-            userGroups:promise.userGroups,
-          });
-        }
-        else{
-          this.setState({
-            userGroups:[],
-          })
-        }
-      })
-      .catch(err => console.log(err));
-
-      //get the base URL for the DHIS install
-      let href = window.location.href;
-      //on a app the system path starts with /api so chop off everything from there
-      if (href.indexOf('/api/')!==-1){
-        href = href.slice(0,href.indexOf('/api/'));
-      }
-      this.setState({urlPath:href});
     },
 
     getInitialState() {
@@ -105,13 +70,36 @@ export default React.createClass({
           filterDisabled:false, // hide disabled users
 //          invertFilter:false, // select everyone not in the given params
           ouRoot:null,        // top of the OU tree, needed for OrgUnitTree
-          userGroups:[],      // all user groups, needed for filter
+          userGroups:{},      // all user groups, needed for filter
           searchChildOUs:false,
           orgChildren:[],     // the children of the selected OU
           urlPath:'',         // server path, needed for user edit link
           processing:false,
           errors:'',
         };
+    },
+
+    //make sure we have our necessary select box data
+    componentDidMount() {
+      //get the base URL for the DHIS install for spooky action at a distance.
+      let href = window.location.href;
+      //on a app the system path starts with /api so chop off everything from there
+      if (href.indexOf('/api/')!==-1){
+        href = href.slice(0,href.indexOf('/api/'));
+      }
+      this.setState({
+        urlPath:href,
+        userGroups:this.props.groups,
+        ouRoot:this.props.ouRoot
+      });
+    },
+
+    //group and OU root data from App.js
+    componentWillReceiveProps(nextProps) {
+      this.setState({
+        userGroups:nextProps.groups,
+        ouRoot:nextProps.ouRoot
+      });
     },
 
     //switch the type of search
@@ -140,15 +128,28 @@ export default React.createClass({
 
     //Clicking on the org tree
     async handleSelectedOrgUnit(event, model) {
+      if (this.state.ouRoot.id===model.id){
+        return;
+      }
       this.setState({
           filter: (model.id === this.state.filter)?null:model.id,
       });
-      let children = await this.getOrgChildren(model.id);
-      this.setState({orgChildren:children});
+      if (this.state.searchChildOUs===true){
+        this.setState({processing:true});
+        let children = await this.getOrgChildren(model.id);
+        this.setState({orgChildren:children,processing:false});
+      }
     },
 
     handleFilterChildOUs(event,value) {
       this.setState({searchChildOUs:value});
+      actions.showSnackbarMessage("Depending on the tree depth this may be slow. Wait a moment.");
+      if (value===true && this.state.ouRoot.id!==this.state.filter && this.state.filter!==null){
+        this.setState({processing:true});
+        this.getOrgChildren(this.state.filter).then(children=>{
+          this.setState({orgChildren:children,processing:false});
+        });
+      }
     },
 
     //recursively find all children of id. return array of IDs
@@ -242,15 +243,15 @@ export default React.createClass({
     getUserGroups(){
       if (this.state.filterBy === 'group'){
         let groups = [];
-        for (let i of this.state.userGroups){
-          groups.push(<MenuItem value={i.id} key={i.id} primaryText={i.displayName} />);
+        for (let i of Object.keys(this.state.userGroups)){
+          groups.push(<MenuItem value={this.state.userGroups[i].id} key={i} primaryText={this.state.userGroups[i].displayName} />);
         }
         return (
           <SelectField
-          floatingLabelText="Group"
-          value={this.state.filter}
-          onChange={this.handleGroupChange}
-        >
+            floatingLabelText="Group"
+            value={this.state.filter}
+            onChange={this.handleGroupChange}
+          >
           {groups}
         </SelectField>
         );
@@ -285,15 +286,18 @@ export default React.createClass({
           search.query=this.state.filterUsername;
       }
 
-      if (this.state.filterBy==='ou' && this.state.searchChildOUs===true && this.state.orgChildren.length>1){
-        //need to issue multiple queries to get all the children OUs
-        this.getMultiOrgUsers(search,this.state.orgChildren)
-          .then(res=>{
-            this.setState({
-              data:res,
-              processing:false,
+      if (this.state.filterBy==='ou' && this.state.searchChildOUs===true){
+        //get the ou children first
+        this.getOrgChildren(this.state.filter).then(children=>{
+          //need to issue multiple queries to get all the children OUs
+          this.getMultiOrgUsers(search,children)
+            .then(res=>{
+              this.setState({
+                data:res,
+                processing:false,
+              });
             });
-          });
+        });
       }
       else{
         api.get('users',search).then(promise=>{
@@ -449,19 +453,22 @@ export default React.createClass({
                   <Checkbox label="Include Child OUs"
                         checked={this.state.searchChildOUs}
                         onCheck={this.handleFilterChildOUs}
-                        disabled={this.state.filterBy!='ou'}
+                        disabled={this.state.filterBy!='ou' || this.state.ouRoot.id===this.state.filter}
                         labelStyle={{color:'grey',fontSize:'small'}}/>
 
                 </div>
-                <RaisedButton
-                  label="Search"
-                  labelPosition="before"
-                  primary={true}
-                  disabled={this.state.processing}
-                  onClick={this.process}
-                  icon={<FontIcon className="material-icons">search</FontIcon>}
-                  style={{'clear':'both','float':'left'}}
-                />
+                <div>
+                  <RaisedButton
+                    label="Search"
+                    labelPosition="before"
+                    primary={true}
+                    disabled={this.state.processing}
+                    onClick={this.process}
+                    icon={<FontIcon className="material-icons">search</FontIcon>}
+                    style={{'clear':'both','float':'left'}}
+                  />
+                  {(this.state.processing===true)?<CircularProgress />:null}
+                </div>
               </Paper>
 
               <Paper className="paper" style={{'float':'left','clear':'both'}}>
