@@ -1,4 +1,4 @@
-// @link http://www.highcharts.com/blog/192-use-highcharts-to-create-charts-in-react
+// Based upon @link http://www.highcharts.com/blog/192-use-highcharts-to-create-charts-in-react
 
 import React from 'react';
 import Highcharts from 'highcharts';
@@ -28,11 +28,17 @@ module.exports = React.createClass({
     },
 
     componentWillReceiveProps(nextProps) {
+      if (!this.hasOwnProperty('chart')){
+        return;
+      }
       this.updateChart(nextProps.groups);
     },
 
     updateChart(groups) {
       for (let g of Object.keys(groups)){
+        if (!this.props.groups.hasOwnProperty(g)){
+          continue;
+        }
         let group = this.props.groups[g];
         if (!group.hasOwnProperty('data')){
           continue;
@@ -59,9 +65,6 @@ module.exports = React.createClass({
 
     //Create the div which the chart will be rendered to.
     render: function () {
-      if (Object.keys(this.props.groups).length>0){
-        return React.createElement('div', { id: this.props.container });
-      }
-      return null;
+      return React.createElement('div', { id: this.props.container });
     }
 });

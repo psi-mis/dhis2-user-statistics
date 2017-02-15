@@ -76,6 +76,7 @@ export default React.createClass({
           urlPath:'',         // server path, needed for user edit link
           processing:false,
           errors:'',
+          pager:{page:0,pageCount:0,pageSize:0,total:0},
         };
     },
 
@@ -282,6 +283,9 @@ export default React.createClass({
       if (this.state.filterBy==='ou' && this.state.filter!==false){
           search.ou=this.state.filter;
       }
+      if (this.state.filterBy==='group' && this.state.filter!==false){
+          search.filter=['userGroups.id:eq:'+this.state.filter];
+      }
       if (this.state.filterUsername!==''){
           search.query=this.state.filterUsername;
       }
@@ -293,7 +297,8 @@ export default React.createClass({
           this.getMultiOrgUsers(search,children)
             .then(res=>{
               this.setState({
-                data:res,
+                data:res.data,
+                pager:res.pager,
                 processing:false,
               });
             });
@@ -304,6 +309,7 @@ export default React.createClass({
           if (promise.hasOwnProperty('users')){
             this.setState({
               data:promise.users,
+              pager:promise.pager,
               processing:false,
             });
           }
@@ -325,14 +331,16 @@ export default React.createClass({
       const d2 = this.props.d2;
       const api = d2.Api.getApi();
       let users = [];
+      let pager = {page:0,pageCount:0,total:0,pageSize:0};
       for (let ou of ous){
         search.ou=ou;
         let s = await api.get('users',search);
         if (s.hasOwnProperty('users')){
           users = users.concat(s.users);
+          pager.total = s.pager.total + pager.total;
         }
       }
-      return users;
+      return {data:users,pager:pager};
     },
 
     render() {
@@ -390,7 +398,6 @@ export default React.createClass({
           </TableRow>
         )});
 
-
         return (
             <div className="wrapper">
               <HelpDialog style={{float:"right"}} title={"App Help"} content={help.help} />
@@ -401,6 +408,7 @@ export default React.createClass({
                 <div style={{'width':'40%','float':'left'}}>
                   <SelectField  value={this.state.type}
                                 onChange={this.handleTypeChange}
+                                autoWidth={true}
                                 floatingLabelText='Find Users who '
                                 maxHeight={200}
                                 style={{'float':'left'}}>
@@ -417,6 +425,7 @@ export default React.createClass({
                         defaultValue={30}
                         min={1}
                         max={180}
+                        autoWidth={true}
                         onChange={this.handleLengthChange}
                         style={{marginBottom:'0px'}}
                         />
@@ -433,6 +442,7 @@ export default React.createClass({
                                 onChange={this.handleFilterChange}
                                 floatingLabelText='Filter By'
                                 maxHeight={200}
+                                autoWidth={true}
                                 style={{'float':'left'}}>
                     <MenuItem value='none' key='none' primaryText='-' />
                     <MenuItem value='group' key='group' primaryText='User Group' />
@@ -468,6 +478,11 @@ export default React.createClass({
                     style={{'clear':'both','float':'left'}}
                   />
                   {(this.state.processing===true)?<CircularProgress />:null}
+                </div>
+
+                <div style={{marginTop:'10em',marginLeft:'25em'}}>
+                  Total Records: {this.state.pager.total}<br/>
+                  Loaded: {this.state.data.length} <br/>
                 </div>
               </Paper>
 
@@ -505,6 +520,7 @@ export default React.createClass({
                             {users}
                   </TableBody>
                 </Table>
+                {(this.state.processing===true)?<CircularProgress />:null}
               </Paper>
 
               <Paper className='paper'>
