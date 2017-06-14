@@ -1,0 +1,97 @@
+@import '../../node_modules/d2-ui/lib/css/HeaderBar.css';
+
+$left-bar-width: 290px;
+$primary1Color: #F1D43A;
+$primary2Color: #E9B626;
+$primary3Color: #C38B15;
+$accent1Color: #F5555D;
+$accent2Color: #F5F5F5;
+$accent3Color: #9E9E9E;
+$textColor: #212121;
+$alternateTextColor: #ffffff;
+
+
+html {
+  background-color: #f3f3f3;
+  font-family: Roboto, Arial, sans-serif;
+}
+
+.app-wrapper {
+  margin-top: 4rem;
+}
+
+.left-bar {
+  bottom: 0;
+  left: 0;
+  margin-top: 8rem;
+  position: fixed;
+  top: 0;
+  width: $left-bar-width;
+}
+
+.content-area {
+  margin-left: $left-bar-width + 5;
+}
+
+/* APP SPECIFIC STYLES */
+$main-color: $primary1Color;
+
+.appheader{
+  max-width: $left-bar-width - 17;
+  position:fixed;
+  background-color: #f3f3f3;
+  padding-left:1em;
+  font-size:22px;
+}
+
+.snackbar{
+  left: 2rem;
+  right: initial;
+}
+
+.wrapper{
+  min-width: 910px;
+  position: relative;
+}
+
+.helpButton {
+  position: absolute;
+  top: 28px;
+  right: 28px;
+}
+
+.helpDialogTitle{
+    background:$primary1Color;
+    color:$alternateTextColor;
+}
+
+.paper{
+  padding:1em;
+  margin:.5em;
+  float:left;
+}
+
+.left{
+  float:left;
+}
+
+.menu, .translations {
+  padding-left:.5em;
+}
+
+.debugBox{
+  clear:both;
+  font-size:60%;
+}
+
+.subdued {
+  color: $accent3Color;
+}
+
+.title_description {
+  font-size: 80%;
+}
+
+.termDivider {
+  background-color: $primary3Color !important;
+}
