@@ -19,6 +19,9 @@ import Listing  from './Listing.component.js';
 import Dashboard  from './Dashboard.component.js';
 //import Usage    from './Usage.component.js';
 //import Activity from './Activity.component.js';
+//
+// import installSqlViews from './sqlViews';
+// import SqlInstaller from '../sqlviewinstaller/Install.component.js';
 
 
 export default React.createClass({
@@ -40,8 +43,29 @@ export default React.createClass({
 
     getInitialState() {
       return {
+        attrStore: {},
         groupStore: {},
+        ouRoot:{},
       };
+    },
+
+    //attribute cache for sub component use
+    async getAttributes() {
+      const d2 =this.props.d2;
+      const api = d2.Api.getApi();
+      let attrs = {};
+      try{
+        let res = await api.get('/attributes?paging=false&fields=name,code,id');
+        if (res.hasOwnProperty('attributes')){
+          for (let a of res.attributes){
+            attrs[a.id]=a.code;
+          }
+        }
+      }
+      catch(e){
+        console.error('Could not access Attributes from API');
+      }
+      return attrs;
     },
 
     //user group cache for sub component use
@@ -50,10 +74,10 @@ export default React.createClass({
       const api = d2.Api.getApi();
       let groups = {};
       try{
-        let res = await api.get('/userGroups?paging=false');
+        let res = await api.get('/userGroups?fields=id,displayName,attributeValues&paging=false');
         if (res.hasOwnProperty('userGroups')){
           for (let g of res.userGroups){
-            groups[g.id]=g
+            groups[g.id]=g;
           }
         }
       }
@@ -84,8 +108,12 @@ export default React.createClass({
       const d2 = this.props.d2;
       const api = d2.Api.getApi();
 
+      let attribs = this.getAttributes();
       let groups = this.getUserGroups();
       let ouRoot = this.getOuRoot();
+      attribs.then(res=>{
+        this.setState({attrStore:res});
+      });
       groups.then(res=>{
         this.setState({groupStore:res});
       });
@@ -139,16 +167,20 @@ export default React.createClass({
         //   break;
 
         case "dashboard":
-          return (<Dashboard d2={d2} groups={this.state.groupStore} />);
+          return (<Dashboard d2={d2} attribs={this.state.attrStore} groups={this.state.groupStore}  ouRoot={this.state.ouRoot} />);
           break;
 
         case "listing":
           return (<Listing d2={d2} groups={this.state.groupStore} ouRoot={this.state.ouRoot}  />);
           break;
 
+        // case "sqlinstaller":
+        //   return (<SqlInstaller d2={d2} views={installSqlViews} />);
+        //   break;
+
         //Default page
         default:
-          return (<Dashboard d2={d2} groups={this.state.groupStore}  />);
+          return (<Dashboard d2={d2} attribs={this.state.attrStore} groups={this.state.groupStore}  ouRoot={this.state.ouRoot} />);
       }
     },
 
@@ -157,6 +189,7 @@ export default React.createClass({
       const sections = [
         { key: 'dashboard', icon:'dashboard',         label:d2.i18n.getTranslation('app_dashboard'), },
         { key: 'listing', icon:'people_outline',      label:d2.i18n.getTranslation('app_listing'), },
+//          { key: 'sqlinstaller', icon:'settings_applications', label:'Installer', },
 //          { key: 'activity',icon:'person_pin',        label:d2.i18n.getTranslation('app_activity'), },
 //          { key: 'usage',   icon:'track_changes',     label:d2.i18n.getTranslation('app_usage'), },
       ].map(section => ({

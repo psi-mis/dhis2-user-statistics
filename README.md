@@ -3,10 +3,15 @@ BAO Access Tracker
 # About BAT
 BAT serves as an user auditing utility for [DHIS2](https://dhis2.org).
 
-Author: [Gregory Wilson](gwilson@baosystes.com)
+Author: [Gregory Wilson](gwilson@baosystems.com)
 Copyright: [BAO Systems](https://baosystems.com)
 Initial Sponsor: [PSI](http://www.psi.org/)
 
+#Setup
+
+In order for this app to work as intended the `User` must have a `User Role` containing `View User Group Managing Relationships` and access to this app itself.
+
+For user groups to show by default on the Dashboard, they need an attribute where the attribute code = 'BATapp_ShowOnDashboard'.
 # Features
 
 ## Phase 1: Listing (30h) Complete
@@ -27,6 +32,8 @@ Initial Sponsor: [PSI](http://www.psi.org/)
 
 * Infographic % active logins by group by days, color coded
 * Number or status (yes/no) of log-in days within a certain period (eg. user(s) that logged in on at least one day each week).
+* Filter groups to just those with a particular attribute
+* Infographic % active logins by group by days, color coded
 
 ## Phase 4: Activity Tracking
 
@@ -34,15 +41,13 @@ Initial Sponsor: [PSI](http://www.psi.org/)
 * How often using feature X
 
 # TODO
-
-* 3: Infographic % active logins by group by days, color coded
-* 3: Number or status (yes/no) of log-in days within a certain period (eg. user(s) that logged in on at least one day each week).
 * 4: Most often clicked on item
 * 4: How often using feature X
-
-* Link from user to account management page (no)
+* More progress wheels for better user feedback that something is happening
 * Bulk inactivation
 * Paging of results
+* Link from user to account management page (no. sqlview prevented from getting user id)
+* Cache the dashboard results to the dataStore
 
 # Building
 

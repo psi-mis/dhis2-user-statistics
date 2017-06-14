@@ -20,6 +20,8 @@ import TextFieldLabel from 'material-ui/lib/text-field';
 import Slider from 'material-ui/lib/slider';
 import {green500, red500} from 'material-ui/lib/styles/colors';
 
+import FilterBy from './Filter.component.js';
+
 import AppTheme from '../colortheme';
 import HelpDialog from './HelpDialog.component';
 import actions from '../actions';
@@ -41,6 +43,8 @@ const help = {
         <li>Listing users who have logged in the past X days</li>
         <li>Listing users who have not logged in the past X days</li>
       </ul>
+      <h3>Note</h3>
+      <p>Choosing to <i>Include Child OUs</i> may <b>dramatically</b> slow down your system depending on how high up in the tree you are searching.</p>
     </div>
   ),
 }
@@ -61,6 +65,8 @@ export default React.createClass({
 
     getInitialState() {
         return {
+          ouRoot:{},
+          userGroups:{},      // all user groups, needed for filter
           type:'stale',       // stale (longer than X days), fresh (within past X days)
           days:90,            // # days
           data:[],            // resulting user list
@@ -70,7 +76,6 @@ export default React.createClass({
           filterDisabled:false, // hide disabled users
 //          invertFilter:false, // select everyone not in the given params
           ouRoot:null,        // top of the OU tree, needed for OrgUnitTree
-          userGroups:{},      // all user groups, needed for filter
           searchChildOUs:false,
           orgChildren:[],     // the children of the selected OU
           urlPath:'',         // server path, needed for user edit link
@@ -108,11 +113,6 @@ export default React.createClass({
       this.setState({type:value});
     },
 
-    //update how they want to filter the data
-    handleFilterChange(event, index, value){
-      this.setState({filter:null,filterBy:value});
-    },
-
     //they want to look up a particular person
     handleUserChange(event){
       this.setState({filterUsername:event.target.value});
@@ -127,63 +127,7 @@ export default React.createClass({
       this.setState({filterDisabled:value});
     },
 
-    //Clicking on the org tree
-    async handleSelectedOrgUnit(event, model) {
-      if (this.state.ouRoot.id===model.id){
-        return;
-      }
-      this.setState({
-          filter: (model.id === this.state.filter)?null:model.id,
-      });
-      if (this.state.searchChildOUs===true){
-        this.setState({processing:true});
-        let children = await this.getOrgChildren(model.id);
-        this.setState({orgChildren:children,processing:false});
-      }
-    },
-
-    handleFilterChildOUs(event,value) {
-      this.setState({searchChildOUs:value});
-      actions.showSnackbarMessage("Depending on the tree depth this may be slow. Wait a moment.");
-      if (value===true && this.state.ouRoot.id!==this.state.filter && this.state.filter!==null){
-        this.setState({processing:true});
-        this.getOrgChildren(this.state.filter).then(children=>{
-          this.setState({orgChildren:children,processing:false});
-        });
-      }
-    },
-
-    //recursively find all children of id. return array of IDs
-    async getOrgChildren(id) {
-      const d2 = this.props.d2;
-      let nodes = [id];
-      let m = await d2.models.organisationUnits.get(id);
-      if (m.id===id){
-        if (m.hasOwnProperty('children') && m.children !== undefined){
-          if (m.children.size===0){
-            return nodes;
-          }
-          for (let child of m.children){
-            let c = await this.getOrgChildren(child[0]);
-            nodes = nodes.concat(c);
-          }
-          return nodes;
-        }
-        else{   //other way to get no children
-          return nodes;
-        }
-      }
-      return nodes;
-    },
-
-    //Clicking on the org tree
-    handleGroupChange(event, index, value) {
-      this.setState({
-          filter: value,
-      });
-    },
-
-    //Toggling of user access
+    //Toggling of user disabled listing
     handleDisableUser(user) {
       const d2 = this.props.d2;
       const api = d2.Api.getApi();
@@ -225,39 +169,57 @@ export default React.createClass({
         });
     },
 
-    //Show the OU tree if that is the current filter
-    getOUTree(){
-      if (this.state.filterBy === 'ou'){
-          return (
-            <OrgUnitTree
-              root={this.state.ouRoot}
-              onClick={this.handleSelectedOrgUnit}
-              selected={[this.state.filter]}
-              selectedLabelStyle={{fontWeight:'bold'}}
-            />
-          );
+    //update how they want to filter the data
+    handleFilterChange(filterBy, value){
+      //toggle the search children box if they switch from group to ou
+      let searchChildren = false;
+      if (this.state.filterBy==='ou'){
+        searchChildren=this.state.searchChildOUs;
       }
-      return null;
+
+      this.setState({filter:value,filterBy:filterBy,searchChildOUs:searchChildren});
+      this.getChildOUs();
     },
 
-    //Show the available User groups
-    getUserGroups(){
-      if (this.state.filterBy === 'group'){
-        let groups = [];
-        for (let i of Object.keys(this.state.userGroups)){
-          groups.push(<MenuItem value={this.state.userGroups[i].id} key={i} primaryText={this.state.userGroups[i].displayName} />);
-        }
-        return (
-          <SelectField
-            floatingLabelText="Group"
-            value={this.state.filter}
-            onChange={this.handleGroupChange}
-          >
-          {groups}
-        </SelectField>
-        );
+    //Include Child OUs checkbox
+    handleFilterChildOUs(event,value) {
+      if (value===true && this.state.filter!==null){
+        actions.showSnackbarMessage("Depending on the tree depth this may be slow. Wait a moment.");
       }
-      return null;
+      this.setState({searchChildOUs:value});
+      this.getChildOUs();
+    },
+
+    async getChildOUs() {
+      if (this.state.filterBy==='ou' && this.state.searchChildOUs===true && this.state.ouRoot.id!==this.state.filter && this.state.filter!==null){
+        this.setState({processing:true});
+        this.getOrgChildren(this.state.filter).then(children=>{
+          this.setState({orgChildren:children,processing:false});
+        });
+      }
+    },
+
+    //recursively find all children of id. return array of IDs
+    async getOrgChildren(id) {
+      const d2 = this.props.d2;
+      let nodes = [id];
+      let m = await d2.models.organisationUnits.get(id);
+      if (m.id===id){
+        if (m.hasOwnProperty('children') && m.children !== undefined){
+          if (m.children.size===0){
+            return nodes;
+          }
+          for (let child of m.children){
+            let c = await this.getOrgChildren(child[0]);
+            nodes = nodes.concat(c);
+          }
+          return nodes;
+        }
+        else{   //other way to get no children
+          return nodes;
+        }
+      }
+      return nodes;
     },
 
     //The search button was pressed
@@ -438,20 +400,12 @@ export default React.createClass({
                 </div>
 
                 <div style={{'width':'40%','float':'left'}}>
-                  <SelectField  value={this.state.filterBy}
-                                onChange={this.handleFilterChange}
-                                floatingLabelText='Filter By'
-                                maxHeight={200}
-                                autoWidth={true}
-                                style={{'float':'left'}}>
-                    <MenuItem value='none' key='none' primaryText='-' />
-                    <MenuItem value='group' key='group' primaryText='User Group' />
-                    <MenuItem value='ou' key='ou' primaryText='Organizational Unit' />
-                  </SelectField>
-                  <div style={{'clear':'both'}}>
-                    {this.getOUTree()}
-                    {this.getUserGroups()}
-                  </div>
+                  <span>Filter by:</span>
+                  <FilterBy value={this.state.filterBy}
+                            onFilterChange={this.handleFilterChange}
+                            groups={this.state.userGroups}
+                            ouRoot={this.props.ouRoot}
+                    />
                 </div>
 
                 <div style={{'width':'19%','float':'left'}}>
