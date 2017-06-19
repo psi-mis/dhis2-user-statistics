@@ -306,8 +306,7 @@ export default React.createClass({
     },
 
     render() {
-        const d2 = this.props.d2;
-
+        const d2 = this.props.d2;        
         let users = this.state.data.map( (row) => {
           //Do some filtering...
           if (this.state.filterBy==='group'){
@@ -337,10 +336,9 @@ export default React.createClass({
             }
           }
           //hide disabled records
-          if (this.state.filterDisabled===true && row.userCredentials.disabled===true){
+          if (this.state.filterDisabled===false && row.userCredentials.disabled===true){
             return null;
           }
-
           //Filters done, display records
           return (
           <TableRow key={row.id} selectable={false}>
@@ -351,8 +349,9 @@ export default React.createClass({
               <IconButton id={row.id} tooltip={(row.userCredentials.disabled===false)?"Disable":"Enable"}
                 onTouchTap={this.handleDisableUser.bind(this,row)}>
                 {(row.userCredentials.disabled===false)?
-                  <FontIcon className="material-icons">check</FontIcon>:
-                  <FontIcon className="material-icons">block</FontIcon>
+                  <FontIcon color='#00ff00' className="material-icons">radio_button_checked</FontIcon>:
+                  <FontIcon color='#FF0000' className="material-icons">radio_button_checked</FontIcon>
+                  
                 }
               </IconButton>
             </TableRowColumn>
@@ -410,7 +409,7 @@ export default React.createClass({
 
                 <div style={{'width':'19%','float':'left'}}>
 
-                  <Checkbox label="Hide Disabled"
+                  <Checkbox label="Show Disabled"
                         checked={this.state.filterDisabled}
                         onCheck={this.handleFilterDisabled}
                         labelStyle={{color:'grey',fontSize:'small'}}/>

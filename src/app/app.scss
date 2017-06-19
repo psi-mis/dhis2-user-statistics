@@ -1,4 +1,6 @@
 @import '../../node_modules/d2-ui/lib/css/HeaderBar.css';
+@import '../../node_modules/react-tabs/style/react-tabs.css';
+
 
 $left-bar-width: 290px;
 $primary1Color: #F1D43A;
@@ -37,7 +39,7 @@ html {
 $main-color: $primary1Color;
 
 .appheader{
-  max-width: $left-bar-width - 17;
+  //max-width: $left-bar-width - 17;
   position:fixed;
   background-color: #f3f3f3;
   padding-left:1em;
@@ -94,4 +96,7 @@ $main-color: $primary1Color;
 
 .termDivider {
   background-color: $primary3Color !important;
+}
+.separator{
+  height: 4em;
 }

@@ -22,7 +22,7 @@ import Dashboard  from './Dashboard.component.js';
 //
 // import installSqlViews from './sqlViews';
 // import SqlInstaller from '../sqlviewinstaller/Install.component.js';
-
+import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 
 export default React.createClass({
     propTypes: {
@@ -187,8 +187,8 @@ export default React.createClass({
     render() {
       const d2 = this.props.d2;
       const sections = [
-        { key: 'dashboard', icon:'dashboard',         label:d2.i18n.getTranslation('app_dashboard'), },
-        { key: 'listing', icon:'people_outline',      label:d2.i18n.getTranslation('app_listing'), },
+//          { key: 'dashboard', icon:'dashboard',         label:d2.i18n.getTranslation('app_dashboard'), },
+//          { key: 'listing', icon:'people_outline',      label:d2.i18n.getTranslation('app_listing'), },
 //          { key: 'sqlinstaller', icon:'settings_applications', label:'Installer', },
 //          { key: 'activity',icon:'person_pin',        label:d2.i18n.getTranslation('app_activity'), },
 //          { key: 'usage',   icon:'track_changes',     label:d2.i18n.getTranslation('app_usage'), },
@@ -200,24 +200,26 @@ export default React.createClass({
 
       return (
           <div className="app-wrapper">
-              <HeaderBar/>
-              <h1 className="appheader">{d2.i18n.getTranslation('app_name')}</h1>
-              <Sidebar
-                  sections={sections}
-                  currentSection={this.state.section}
-                  onChangeSection={this.setSection}
-                  ref="sidebar"
-              />
-              <Snackbar className="snackbar"
-                  message={this.state.snackbar || ''}
-                  autoHideDuration={2500}
-                  onRequestClose={this.closeSnackbar}
-                  open={!!this.state.snackbar}
-              />
-              <div className="content-area">
-                  {this.renderSection(this.state.section)}
-              </div>
+           <h1 className="appheader">{d2.i18n.getTranslation('app_name')}</h1>
+           <HeaderBar />
+            <div className="separator"></div>
+              <Tabs>
+                <TabList>
+                  <Tab><FontIcon className="material-icons">dashboard</FontIcon> {d2.i18n.getTranslation('app_dashboard')}</Tab>
+                  <Tab><FontIcon className="material-icons">listing</FontIcon>{d2.i18n.getTranslation('app_listing')}</Tab>
+                  
+                </TabList>
+                <TabPanel>
+                    {this.renderSection('dashboard')}                
+                </TabPanel>
+                <TabPanel>
+                  {this.renderSection('listing')}
+                </TabPanel>
+               
+              </Tabs>
           </div>
+          
+          
       );
     },
 });

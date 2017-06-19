@@ -6,8 +6,12 @@
   "scripts": {
     "coverage": "babel-node node_modules/.bin/isparta cover --root ./src --report text --report html --report lcov node_modules/mocha/bin/_mocha -- --reporter dot --require config/setup.js --recursive test",
     "prebuild": "rm -rf build && mkdir build && d2-manifest package.json manifest.webapp",
+    "prebuild_win": "IF EXIST build rd build /S /Q && mkdir build",
     "build": "rm -rf build && webpack && npm run manifest",
+    "build_win": "npm run prebuild_win && webpack && npm run manifest",
     "postbuild": "cp -rv index.html icon*.png i18n node_modules/jquery/dist/jquery.min.js node_modules/babel-polyfill/dist/polyfill.min.js manifest.webapp build/",
+    "postbuild_win_globalnpm": "copyfiles -u -s index.html icon*.png node_modules/jquery/dist/jquery.min.js node_modules/babel-polyfill/dist/polyfill.min.js manifest.webapp build && npm run _postbuild_win_globalnpm",
+    "_postbuild_win_globalnpm": "copyfiles i18n/*  build",
     "test": "mocha --reporter spec --compilers js:babel-core/register --require config/setup.js --recursive test",
     "test-watch": "mocha --reporter spec --compilers js:babel-core/register --require config/setup.js --recursive test --watch",
     "lint": "eslint --fix src && ./node_modules/eslint/bin/eslint.js --env node,mocha --global expect,sinon,spy,stub --rule 'no-unused-expressions: 0' test && scss-lint",
@@ -15,12 +19,15 @@
     "prestart": "d2-manifest package.json manifest.webapp",
     "manifest": "d2-manifest package.json build/manifest.webapp",
     "start": "webpack-dev-server",
+    "dist_win": "npm run build_win && npm run postbuild_win_globalnpm",
     "dist": "npm run build && npm run postbuild && cd build && zip -r bat-app.zip * && cd .."
   },
   "keywords": [
     "DHIS2",
     "App",
-    "BAO Systems"
+    "BAO Systems",
+    "HISP Colombia",
+    "PSI"
   ],
   "author": "Gregory Wilson <gwilson@baosystems.com>",
   "license": "BAO Systems, Inc.",
@@ -29,6 +36,7 @@
     "jquery": "^2.2.3"
   },
   "devDependencies": {
+    "babel-cli": "^6.24.1",
     "babel-core": "^6.9.1",
     "babel-eslint": "^6.0.2",
     "babel-loader": "^6.0.0",
@@ -37,6 +45,7 @@
     "babel-preset-react": "^6.0.0",
     "babel-preset-stage-0": "^6.5.0",
     "chai": "^3.5.0",
+    "classnames": "^2.2.5",
     "css-loader": "^0.23.1",
     "d2": "^24.0",
     "d2-manifest": "^1.0.0",
@@ -54,11 +63,12 @@
     "node-sass": "^3.8.0",
     "react": "^0.14.8",
     "react-dom": "^0.14.8",
+    "react-tabs": "^1.1.0",
     "react-tap-event-plugin": "^0.2.2",
     "sass-loader": "^4.0.0",
-    "style-loader": "^0.13.1",
     "sinon": "^1.17.3",
     "sinon-chai": "^2.8.0",
+    "style-loader": "^0.13.1",
     "webpack": "^1.13.1",
     "webpack-dev-server": "^1.14.1"
   },
@@ -84,7 +94,7 @@
     },
     "developer": {
       "url": "",
-      "name": "Gregory Wilson <gwilson@baosystems.com>"
+      "name": "Gregory Wilson <gwilson@baosystems.com>, Helder Castrillón <heldersoft@gmail.com>"
     }
   }
 }

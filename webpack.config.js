@@ -5,20 +5,28 @@ var path = require('path');
 var colors = require('colors');
 
 const isDevBuild = process.argv[1].indexOf('webpack-dev-server') !== -1;
-const dhisConfigPath = process.env.DHIS2_HOME && `${process.env.DHIS2_HOME}/config`;
+const dhisConfigPath = process.env.DHIS2_HOME && `${process.env.DHIS2_HOME}\\dhis.conf`;
+
 let dhisConfig;
 
 try {
     dhisConfig = require(dhisConfigPath);
     console.log('\nLoaded DHIS config:');
 } catch (e) {
-    // Failed to load config file - use default config
-    console.warn(`\nWARNING! Failed to load DHIS config:`, e.message);
-    console.info('Using default config');
-    dhisConfig = {
-        baseUrl: 'http://localhost:8080/dhis',
-        authorization: 'Basic YWRtaW46ZGlzdHJpY3Q=', // admin:district
-    };
+        try{ //
+            dhisConfigPath = process.env.DHIS2_HOME && `${process.env.DHIS2_HOME}/config`;
+            dhisConfig = require(dhisConfigPath);
+            console.log('\nLoaded DHIS config Windows version:');
+        }catch(e){
+        // Failed to load config file - use default config
+        console.warn(`\nWARNING! Failed to load DHIS config:`, e.message);
+        console.info('Using default config');
+        dhisConfig = {
+            baseUrl: 'http://localhost:8080/',
+            authorization: 'Basic YWRtaW46ZGlzdHJpY3Q=', // admin:district
+        };
+    }
+    
 }
 console.log(JSON.stringify(dhisConfig, null, 2), '\n');
 
@@ -70,9 +78,9 @@ const webpackConfig = {
         inline: true,
         compress: true,
         proxy: [
-            { path: '/api/*', target: dhisConfig.baseUrl, bypass: log },
-            { path: '/dhis-web-commons/*', target: dhisConfig.baseUrl, bypass: log },
-            { path: '/icons/*', target: dhisConfig.baseUrl, bypass: log },
+            { path: 'api/*', target: dhisConfig.baseUrl, bypass: log },
+            { path: 'dhis-web-commons/*', target: dhisConfig.baseUrl, bypass: log },
+            { path: 'icons/*', target: dhisConfig.baseUrl, bypass: log },
             { path: '/css/*', target: 'http://localhost:8081/build', bypass: log },
             { path: '/jquery.min.js', target: 'http://localhost:8081/node_modules/jquery/dist', bypass: log },
             { path: '/polyfill.min.js', target: 'http://localhost:8081/node_modules/babel-polyfill/dist', bypass: log },
