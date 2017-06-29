@@ -1,7 +1,7 @@
 DHIS2 User Statistics
 ==============
 # About
-DHIS2 User Statistics  serves as an user auditing utility for [DHIS2](https://dhis2.org).
+DHIS2 User Statistics serves as an user auditing utility for [DHIS2](https://dhis2.org).
 
 Author: [Gregory Wilson](gwilson@baosystems.com)
 
