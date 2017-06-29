@@ -4,6 +4,7 @@ DHIS2 User Statistics
 DHIS2 User Statistics  serves as an user auditing utility for [DHIS2](https://dhis2.org).
 
 Author: [Gregory Wilson](gwilson@baosystems.com)
+
 Sponsor: [PSI](http://www.psi.org/)
 
 #Setup
