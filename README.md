@@ -1,11 +1,10 @@
-BAO Access Tracker
+DHIS2 User Statistics
 ==============
-# About BAT
-BAT serves as an user auditing utility for [DHIS2](https://dhis2.org).
+# About
+DHIS2 User Statistics  serves as an user auditing utility for [DHIS2](https://dhis2.org).
 
 Author: [Gregory Wilson](gwilson@baosystems.com)
-Copyright: [BAO Systems](https://baosystems.com)
-Initial Sponsor: [PSI](http://www.psi.org/)
+Sponsor: [PSI](http://www.psi.org/)
 
 #Setup
 
