@@ -1,7 +1,7 @@
 {
-  "name": "BAT-app",
+  "name": "dhis2-user-statistics-app",
   "version": "0.4.0",
-  "description": "BAO Access Tracking and Auditing App",
+  "description": "DHIS2 User Statistics",
   "main": "src/index.html",
   "scripts": {
     "coverage": "babel-node node_modules/.bin/isparta cover --root ./src --report text --report html --report lcov node_modules/mocha/bin/_mocha -- --reporter dot --require config/setup.js --recursive test",
@@ -15,7 +15,7 @@
     "prestart": "d2-manifest package.json manifest.webapp",
     "manifest": "d2-manifest package.json build/manifest.webapp",
     "start": "webpack-dev-server",
-    "dist": "npm run build && npm run postbuild && cd build && zip -r bat-app.zip * && cd .."
+    "dist": "npm run build && npm run postbuild && cd build && zip -r dhis2-user-statistics-app.zip * && cd .."
   },
   "keywords": [
     "DHIS2",
@@ -72,11 +72,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+bitbucket.org:baosystems/bat-app.git"
+    "url": "git+github.com:psi-mis/dhis2-user-statistics"
   },
-  "homepage": "https://bitbucket.org/baosystems/bat-app",
+  "homepage": "https://github.com/psi-mis/dhis2-user-statistics",
   "manifest.webapp": {
-    "name": "Access Tracking and Auditing",
+    "name": "DHIS2 User Statistics",
     "icons": {
       "16": "icon-16.png",
       "48": "icon.png",
