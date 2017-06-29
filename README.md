@@ -7,11 +7,12 @@ Author: [Gregory Wilson](gwilson@baosystems.com)
 
 Sponsor: [PSI](http://www.psi.org/)
 
-#Setup
+# Setup
 
 In order for this app to work as intended the `User` must have a `User Role` containing `View User Group Managing Relationships` and access to this app itself.
 
 For user groups to show by default on the Dashboard, they need an attribute where the attribute code = 'BATapp_ShowOnDashboard'.
+
 # Features
 
 ## Phase 1: Listing (30h) Complete
