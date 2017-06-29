@@ -72,7 +72,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+github.com/psi-mis/dhis2-user-statistics"
+    "url": "git+github.com:psi-mis/dhis2-user-statistics"
   },
   "homepage": "https://github.com/psi-mis/dhis2-user-statistics",
   "manifest.webapp": {
