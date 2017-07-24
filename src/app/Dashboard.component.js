@@ -7,6 +7,7 @@ import Snackbar from 'material-ui/lib/snackbar';
 import {Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn} from 'material-ui/lib/table';
 import CircularProgress from 'material-ui/lib/circular-progress';
 import RaisedButton from 'material-ui/lib/raised-button';
+import FontIcon from 'material-ui/lib/font-icon';
 
 import {green300, lightGreen300, yellow300, orange300, deepOrange300, red300} from 'material-ui/lib/styles/colors';
 
@@ -93,7 +94,7 @@ export default React.createClass({
         userGroupsFiltered:fg,
         userGroups:this.props.groups,
         ouRoot:this.props.ouRoot,
-        waiting:1,
+        waiting:0,
       });
       // this.getGroupLoginStats(false).then(res=>{
       //   this.setState({userAll:{
@@ -107,6 +108,37 @@ export default React.createClass({
 
     },
 
+    
+      getReport() {
+      var nextProps=this.props; 
+      this.getGroupLoginStats(false).then(res=>{
+        this.setState({userAll:{
+          all:{
+            displayName:'All',
+            id:'all',
+            data:res
+          }
+        }})
+      });
+
+      let groups = nextProps.groups;
+      let filtered = this.filterGroups(groups);
+      this.setState({
+        waiting:Object.keys(filtered).length,
+        userGroups:groups
+      });
+      for (let ug of Object.keys(filtered)){
+        this.getGroupLoginStats(ug).then(res=>{
+         filtered[ug]['data']=res;
+         this.setState({
+           userGroupsFiltered:filtered,
+           waiting:this.state.waiting-1,
+         })
+        });
+      }
+    },
+    
+    
     //group data from App.js
     componentWillReceiveProps(nextProps) {
 
@@ -286,7 +318,7 @@ export default React.createClass({
 
     render() {
         const d2 = this.props.d2;
-
+        console.log("aqui");
         let options_all = {
           colors: loginStatusColors,
           chart: { type: 'bar' },
@@ -331,6 +363,17 @@ export default React.createClass({
               <HelpDialog style={{float:"right"}} title={"App Help"} content={help.help} />
 
               <Paper style={{'width':'35%','float':'right','padding':'5px'}}>
+               <RaisedButton
+                      label="Get report"
+                      labelPosition="before"
+                      primary={true}
+                      disabled={this.state.processing}
+                      onClick={this.getReport}
+                      disabled={this.state.filterstatus == false}
+                      icon={<FontIcon className="material-icons">get</FontIcon>}
+                      style={{ 'clear': 'both', 'float': 'left' }}
+              />
+              <div style={{'height':'50px'}}></div>
               <p>Add additional groups:</p>
                 <FilterBy value={this.state.filterBy}
                           onFilterChange={this.handleFilterChange}
@@ -340,7 +383,7 @@ export default React.createClass({
               </Paper>
 
               <Paper className='paper' style={{'width':'60%'}}>
-                <h3 className="subdued title_description">{d2.i18n.getTranslation('app_dashboard')}</h3>
+                <h3 className="subdued title_description">{d2.i18n.getTranslation('app_dashboard_user_access')}</h3>
 {/*   this isn't working when returning to the page after clicking on the Listing tab
                 {Object.keys(this.state.userGroups).length>0?(
                   <ChartLogins container='chartAll' options={options_all} groups={this.state.userAll} />):null

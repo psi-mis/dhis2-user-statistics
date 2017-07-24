@@ -16,7 +16,9 @@ injectTapEventPlugin();
 const HeaderBar = withStateFrom(headerBarStore$, HeaderBarComponent);
 
 import Listing  from './Listing.component.js';
+import ListingInterpretation  from './ListingInterpretation.component.js';
 import Dashboard  from './Dashboard.component.js';
+import DashboardInterpretation  from './DashboardInterpretation.component.js';
 //import Usage    from './Usage.component.js';
 //import Activity from './Activity.component.js';
 //
@@ -174,6 +176,14 @@ export default React.createClass({
           return (<Listing d2={d2} groups={this.state.groupStore} ouRoot={this.state.ouRoot}  />);
           break;
 
+        case "dashboardInterpretation":
+          return (<DashboardInterpretation d2={d2} attribs={this.state.attrStore} groups={this.state.groupStore}  ouRoot={this.state.ouRoot} />);
+          break;
+
+         case "listingInterpretation":
+          return (<ListingInterpretation d2={d2} groups={this.state.groupStore} ouRoot={this.state.ouRoot}  />);
+          break;
+
         // case "sqlinstaller":
         //   return (<SqlInstaller d2={d2} views={installSqlViews} />);
         //   break;
@@ -205,8 +215,11 @@ export default React.createClass({
             <div className="separator"></div>
               <Tabs>
                 <TabList>
-                  <Tab><FontIcon className="material-icons">dashboard</FontIcon> {d2.i18n.getTranslation('app_dashboard')}</Tab>
-                  <Tab><FontIcon className="material-icons">listing</FontIcon>{d2.i18n.getTranslation('app_listing')}</Tab>
+                  <Tab><FontIcon className="material-icons">Dashboard</FontIcon> {d2.i18n.getTranslation('app_dashboard_user_access')}</Tab>
+                  <Tab><FontIcon className="material-icons">Listing</FontIcon>{d2.i18n.getTranslation('app_listing_user_access')}</Tab>
+                  <Tab><FontIcon className="material-icons">dashboard</FontIcon> {d2.i18n.getTranslation('app_dashboard_user_interpretation')}</Tab>
+                  <Tab><FontIcon className="material-icons">listing</FontIcon>{d2.i18n.getTranslation('app_listing_user_interpretation')}</Tab>
+                  
                   
                 </TabList>
                 <TabPanel>
@@ -214,6 +227,12 @@ export default React.createClass({
                 </TabPanel>
                 <TabPanel>
                   {this.renderSection('listing')}
+                </TabPanel>
+                 <TabPanel>
+                  {this.renderSection('dashboardInterpretation')}
+                </TabPanel>
+                 <TabPanel>
+                  {this.renderSection('listingInterpretation')}
                 </TabPanel>
                
               </Tabs>
