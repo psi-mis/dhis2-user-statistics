@@ -76,7 +76,7 @@ export default React.createClass({
       const api = d2.Api.getApi();
       let groups = {};
       try{
-        let res = await api.get('/userGroups?fields=id,displayName,attributeValues&paging=false');
+        let res = await api.get('/userGroups?fields=id,displayName,attributeValues,users&paging=false');
         if (res.hasOwnProperty('userGroups')){
           for (let g of res.userGroups){
             groups[g.id]=g;
@@ -210,10 +210,13 @@ export default React.createClass({
 
       return (
           <div className="app-wrapper">
-           <h1 className="appheader">{d2.i18n.getTranslation('app_name')}</h1>
+           
            <HeaderBar />
-            <div className="separator"></div>
+            
+            
               <Tabs>
+                <h1 className="appheader">{d2.i18n.getTranslation('app_name')}</h1>
+                <div className="separator"></div>
                 <TabList>
                   <Tab><FontIcon className="material-icons">Dashboard</FontIcon> {d2.i18n.getTranslation('app_dashboard_user_access')}</Tab>
                   <Tab><FontIcon className="material-icons">Listing</FontIcon>{d2.i18n.getTranslation('app_listing_user_access')}</Tab>

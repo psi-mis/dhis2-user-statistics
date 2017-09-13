@@ -26,6 +26,9 @@ import AppTheme from '../colortheme';
 import HelpDialog from './HelpDialog.component';
 import actions from '../actions';
 
+
+
+
 const help = {
   help: (
     <div>
@@ -65,16 +68,25 @@ export default React.createClass({
 
   getInitialState() {
     return {
+      ouRoot: {},
+      userGroups: {},
+      userGroupsSelected: [],
+      userGroupsSelectedNamed: [],
       type: 'commInt',       // commInt (show comment and interpretation)
+      filterBy: 'none',    // none, group, ou
       data: [],
+      tags: [],
+      suggestions: [],
       pager: { page: 0, pageCount: 0, pageSize: 0, total: 0 }
     };
   },
-
   //make sure we have our necessary select box data
   componentDidMount() {
     //dispath the Interprtation search when page is loaded.
-    this.process();
+    this.setState({
+      userGroups: this.props.groups,
+      ouRoot: this.props.ouRoot
+    });
   },
 
   //switch the type of search
@@ -89,42 +101,58 @@ export default React.createClass({
     this.setState({ filterUsername: "" });
     this.setState({ type: "commInt" });
   },
-  //agregate API result  
+  //add groups 
+  addGroups(uid) {
+    this.state.data.map((row) => {
+      row.userGroups.map((Group) => {
+        if (Group.id == uid) {
+          this.state.userGroupsSelected.push({ id: uid });
+          //this.state.userGroupsSelectedNamed[uid]={name:this.state.userGroups[uid].displayName};
+          var index = this.state.userGroupsSelectedNamed.findIndex(x => x.id === uid);
+          if (index === -1)
+            this.state.userGroupsSelectedNamed.push({ id: uid, name: this.state.userGroups[uid].displayName });
+        }
+      });
+    });
+
+  },
+  //agregate API result
   aggregateResult(dataValues) {
     var aggregateValue = [];
     var lastdateInterpretation = null;
     var lastdateComment = null;
     dataValues.map((dataValue) => {
       //add Interpretation
-      var index = aggregateValue.findIndex(x => (x.user === dataValue.user.id && x.type === "interpretation"));
-
-      try {
-        console.log(aggregateValue[0].id);
-      } catch (err) {
-        console.log("vacio")
-      };
-
+      var index = aggregateValue.findIndex(x => x.user === dataValue.user.id);
       if (index === -1) {
-        aggregateValue.push({ "id": dataValue.id, "user": dataValue.user.id, "userName": dataValue.user.name, "created": dataValue.created, "type": "interpretation", "total": 1 });
+        aggregateValue.push({ "id": dataValue.id, "user": dataValue.user.id, "userName": dataValue.user.name, "InterpretationCreated": dataValue.created, "commentCreated": "1900-01-01", userGroups: dataValue.user.userGroups, organisationUnits: dataValue.user.organisationUnits, "totalInterpretation": 1, "totalComment": 0 });
       }
       else {
         var dateInterpretation = new Date(dataValue.created);
-        if (dateInterpretation > lastdateInterpretation) {
-          aggregateValue[index] = { "id": dataValue.id, "user": dataValue.user.id, "userName": dataValue.user.name, "created": dataValue.created, "type": "interpretation", "total": aggregateValue[index].total+1 };
-          lastdateInterpretation = dateInterpretation;
+        var lastdateInterpretation = new Date(aggregateValue[index].InterpretationCreated);
+        if (isNaN(lastdateInterpretation.getTime())) {
+          var lastdateInterpretation = new Date("1900-01-01")
         }
-
+        if (dateInterpretation > lastdateInterpretation) {
+          aggregateValue[index].InterpretationCreated = dataValue.created;
+        }
+        aggregateValue[index].totalInterpretation++;
       }
       dataValue.comments.map((dataValuecomm) => {
-        var indexm = aggregateValue.findIndex(x => (x.user === dataValuecomm.user.id && x.type === "comment"));
+        var indexm = aggregateValue.findIndex(x => x.user === dataValuecomm.user.id);
         if (indexm === -1) {
-          aggregateValue.push({ "id": dataValuecomm.id, "user": dataValuecomm.user.id, "userName": dataValuecomm.user.name, "created": dataValuecomm.created, "type": "comment", "total": 1 });
+          aggregateValue.push({ "id": dataValuecomm.id, "user": dataValuecomm.user.id, "userName": dataValuecomm.user.name, "InterpretationCreated": "1900-01-01", "commentCreated": dataValuecomm.created, userGroups: dataValuecomm.user.userGroups, organisationUnits: dataValuecomm.user.organisationUnits, "totalInterpretation": 0, "totalComment": 1 });
         }
         else {
           var dateComment = new Date(dataValuecomm.created);
-          if (dateComment > lastdateComment) {
-            aggregateValue[indexm] = { "id": dataValuecomm.id, "user": dataValuecomm.user.id, "userName": dataValuecomm.user.name, "created": dataValuecomm.created, "type": "comment", "total": aggregateValue[indexm].total+1 };
+          var lastdateComment = new Date(aggregateValue[indexm].commentCreated);
+          if (isNaN(lastdateComment.getTime())) {
+            var lastdateComment = new Date("1900-01-01")
           }
+          if (dateComment > lastdateComment) {
+            aggregateValue[indexm].commentCreated = dataValuecomm.created;
+          }
+          aggregateValue[indexm].totalComment++;
         }
 
       });
@@ -141,7 +169,7 @@ export default React.createClass({
     var lastLoginDate = new Date();
     lastLoginDate.setDate(lastLoginDate.getDate() - this.state.days);
     let search = {
-      fields: 'id,type,user[name,id],text,created,lastUpdated,text,comments[id,user[name,id],text,created,lastUpdated]'
+      fields: 'id,type,user[name,id,userGroups[id],organisationUnits[id,path]],created,lastUpdated,comments[id,user[name,id,userGroups[id],organisationUnits[id,path]],created,lastUpdated]'
     };
     api.get('interpretations', search).then(promise => {
       if (promise.hasOwnProperty('interpretations')) {
@@ -164,7 +192,72 @@ export default React.createClass({
       });
 
   },
+  //update how they want to filter the data
+  handleFilterChange(filterBy, value) {
+    //toggle the search children box if they switch from group to ou
+    let searchChildren = false;
+    if (this.state.filterBy === 'ou') {
+      searchChildren = this.state.searchChildOUs;
+    }
+    else {
+      if (value)
+        this.addGroups(value);
+    }
 
+    this.setState({ filter: value, filterBy: filterBy, searchChildOUs: searchChildren });
+    //this.getChildOUs();
+  },
+  ClearFilters() {
+    this.setState({ filterUsername: "" });
+    this.setState({ filterBy: 'none' });
+    this.setState({ days: 90 });
+    this.setState({ type: 'stale' });
+    this.setState({ searchChildOUs: false });
+    this.setState({ filterDisabled: false });
+    this.setState({ userGroupsSelected: [] });
+    this.setState({ userGroupsSelectedNamed: [] });
+  },
+
+  //Include Child OUs checkbox
+  handleFilterChildOUs(event, value) {
+    if (value === true && this.state.filter !== null) {
+      actions.showSnackbarMessage("Depending on the tree depth this may be slow. Wait a moment.");
+    }
+    this.setState({ searchChildOUs: value });
+   // this.getChildOUs();
+  },
+
+  // async getChildOUs() {
+  //   if (this.state.filterBy === 'ou' && this.state.searchChildOUs === true && this.state.ouRoot.id !== this.state.filter && this.state.filter !== null) {
+  //     this.setState({ processing: true });
+  //     this.getOrgChildren(this.state.filter).then(children => {
+  //       this.setState({ orgChildren: children, processing: false });
+  //     });
+  //   }
+  // },
+
+  //recursively find all children of id. return array of IDs
+  async getOrgChildren(id) {
+    const d2 = this.props.d2;
+    let nodes = [id];
+    let m = await d2.models.organisationUnits.get(id);
+    if (m.id === id) {
+      if (m.hasOwnProperty('children') && m.children !== undefined) {
+        if (m.children.size === 0) {
+          return nodes;
+        }
+        for (let child of m.children) {
+          let c = await this.getOrgChildren(child[0]);
+          nodes = nodes.concat(c);
+        }
+        return nodes;
+      }
+      else {   //other way to get no children
+        return nodes;
+      }
+    }
+    return nodes;
+  },
 
   //The search button was pressed
   process() {
@@ -176,10 +269,36 @@ export default React.createClass({
     var countReg = 0;
     let users = this.state.data.map((row) => {
       //Filters done, display records
-
-      //hide disabled records aqui voy
-      if (this.state.type != row.type && this.state.type != "commInt") {
-        return null;
+      //Do some filtering...
+      if (this.state.filterBy === 'group' && this.state.userGroupsSelected.length > 0) {
+        let found = false;
+        for (let g of row.userGroups) {
+          for (let u of this.state.userGroupsSelected) {
+            if (g.id === u.id) {
+              found = true;
+            }
+          }
+        }
+        if (found === false) {
+          return null;
+        }
+      }
+      else if (this.state.filterBy === 'ou') {
+        let found = false;
+        for (let g of row.organisationUnits) {
+          if (g.id === this.state.filter) {
+            found = true;
+          }
+          if (g.path.includes(this.state.filter) === true && this.state.searchChildOUs === true)
+            found = true
+          //child OUs
+          // if (this.state.searchChildOUs === true && this.state.orgChildren.indexOf(g.id) >= 0) {
+          //   found = true;
+          // }
+        }
+        if (found === false) {
+          return null;
+        }
       }
 
       //match with username
@@ -192,9 +311,10 @@ export default React.createClass({
       return (
         <TableRow key={row.id}>
           <TableRowColumn>{row.userName}</TableRowColumn>
-          <TableRowColumn>{row.created}</TableRowColumn>
-          <TableRowColumn><FontIcon className="material-icons">{row.type == "comment" ? "comment" : "assignment"}</FontIcon></TableRowColumn>
-          <TableRowColumn>{row.total}</TableRowColumn>
+          <TableRowColumn>{(row.InterpretationCreated == "1900-01-01" ? "-" : row.InterpretationCreated)}</TableRowColumn>
+          <TableRowColumn>{(row.commentCreated == "1900-01-01" ? "-" : row.commentCreated)}</TableRowColumn>
+          <TableRowColumn>{row.totalInterpretation}</TableRowColumn>
+          <TableRowColumn>{row.totalComment}</TableRowColumn>
         </TableRow>
       )
     });
@@ -210,56 +330,70 @@ export default React.createClass({
               floatingLabelFixed={true}
               value={this.state.filterUsername}
               onChange={this.handleUserChange} />
+            <Checkbox label="Include Child OUs"
+              checked={this.state.searchChildOUs}
+              onCheck={this.handleFilterChildOUs}
+              disabled={this.state.filterBy != 'ou' || this.state.ouRoot.id === this.state.filter}
+              labelStyle={{ color: 'grey', fontSize: 'small' }}
+            />
+
           </div>
-          <div style={{ 'width': '20%', 'float': 'left' }}>
-            <SelectField value={this.state.type}
-              onChange={this.handleFilter}
-              autoWidth={true}
-              disabled={this.state.filterstatus == false}
-              floatingLabelText={d2.i18n.getTranslation('app_lbl_finduser')}
-              maxHeight={100}
-              style={{ 'float': 'left' }}>
-              <MenuItem value='commInt' key='commInt' label={d2.i18n.getTranslation('app_opt_commInt')} primaryText={d2.i18n.getTranslation('app_opt_commInt')} />
-              <MenuItem value='comment' key='comment' label={d2.i18n.getTranslation('app_opt_comment')} primaryText={d2.i18n.getTranslation('app_opt_comment')} />
-              <MenuItem value='interpretation' key='interpretation' label={d2.i18n.getTranslation('app_opt_interpretation')} primaryText={d2.i18n.getTranslation('app_opt_interpretation')} />
-            </SelectField>
+          <div style={{ 'width': '30%', 'float': 'left' }}>
+            <FilterBy value={this.state.filterBy}
+              onFilterChange={this.handleFilterChange}
+              groups={this.state.userGroups}
+              ouRoot={this.props.ouRoot}
+            />
           </div>
           <div style={{ 'width': '40%', 'float': 'right' }}>
             <div style={{ 'height': '25px' }}></div>
             <table>
               <tbody>
-              <tr>
-                <td>
-                  <RaisedButton
-                    label="Clear"
-                    labelPosition="before"
-                    primary={true}
-                    disabled={this.state.processing}
-                    onClick={this.ClearFilters}
-                    disabled={this.state.filterstatus == false}
-                    icon={<FontIcon className="material-icons">settings_backup_restore</FontIcon>}
-                    style={{ 'clear': 'both', 'float': 'left' }}
-                  />
-                </td>
-                <td>
-                  <RaisedButton
-                    label="Search"
-                    labelPosition="before"
-                    primary={true}
-                    disabled={this.state.processing}
-                    onClick={this.getInterpretation}
-                    disabled={this.state.filterstatus == false}
-                    icon={<FontIcon className="material-icons">search</FontIcon>}
-                    style={{ 'clear': 'both', 'float': 'left' }}
-                  />
-                </td>
-              </tr>
-               </tbody>
+                <tr>
+                  <td>
+                    <RaisedButton
+                      label="Search"
+                      labelPosition="before"
+                      primary={true}
+                      disabled={this.state.processing}
+                      onClick={this.getInterpretation}
+                      disabled={this.state.filterstatus == false}
+                      icon={<FontIcon className="material-icons">search</FontIcon>}
+                      style={{ 'clear': 'both', 'float': 'left' }}
+                    />
+                  </td>
+                  <td>
+                    <RaisedButton
+                      label="Clear search"
+                      labelPosition="before"
+                      primary={true}
+                      disabled={this.state.processing}
+                      onClick={this.ClearFilters}
+                      disabled={this.state.filterstatus == false}
+                      icon={<FontIcon className="material-icons">settings_backup_restore</FontIcon>}
+                      style={{ 'clear': 'both', 'float': 'left' }}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan="2">
+                    <div style={{ 'overflowY': 'scroll', 'height': '100px' }}>
+                      <ul>
+                        {this.state.userGroupsSelectedNamed.map((gname) => {
+
+                          return (
+                            <li>{gname.name}</li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
             </table>
           </div>
 
-          <div style={{ 'width': '10%', 'float': 'left' }}>
-          </div>
+
           <div>
             {(this.state.processing === true) ? <CircularProgress /> : null}
           </div>
@@ -277,14 +411,17 @@ export default React.createClass({
                   UserName
                       </TableHeaderColumn>
                 <TableHeaderColumn>
-                  Created date
+                  Last Interpretation Created
                       </TableHeaderColumn>
                 <TableHeaderColumn>
-                  Type
+                  Last Comment Created
                       </TableHeaderColumn>
                 <TableHeaderColumn>
-                  Number of register
-                      </TableHeaderColumn>
+                  Number of Interprations
+                </TableHeaderColumn>
+                <TableHeaderColumn>
+                  Number of Comments
+                </TableHeaderColumn>
               </TableRow>
             </TableHeader>
             <TableBody

@@ -128,8 +128,10 @@ export default React.createClass({
     this.setState({ filterDisabled: value });
   },
 
-  handlefilterstatus(event, value) {
-    this.setState({ filterstatus: value });
+  handlefilterstatus(event, value) {  
+   // this.ClearFilters();
+     this.setState({ filterstatus: value });
+    this.setState({ days: 90 });
   },
 
   //Toggling of user disabled listing
@@ -247,21 +249,21 @@ export default React.createClass({
 
     let search = {
       fields: '*',
-      pageSize: 50,
+      paging: false,
     };
-    if (this.state.type === 'fresh') {
+    if (this.state.type === 'fresh' && this.state.filterstatus==true) {
       search.lastLogin = lastLoginDate.toISOString().substr(0, 10);
     }
-    else if (this.state.type === 'stale') {
+    else if (this.state.type === 'stale'&& this.state.filterstatus==true) {
       search.inactiveSince = lastLoginDate.toISOString().substr(0, 10);
     }
-    if (this.state.filterBy === 'ou' && this.state.filter !== false) {
+    if (this.state.filterBy === 'ou' && this.state.filter !== false && this.state.filterstatus==true) {
       search.ou = this.state.filter;
     }
-    if (this.state.filterBy === 'group' && this.state.filter !== false) {
+    if (this.state.filterBy === 'group' && this.state.filter !== false && this.state.filterstatus==true) {
       search.filter = ['userGroups.id:eq:' + this.state.filter];
     }
-    if (this.state.filterUsername !== '') {
+    if (this.state.filterUsername !== '' && this.state.filterstatus==true) {
       search.query = this.state.filterUsername;
     }
 
@@ -379,15 +381,38 @@ export default React.createClass({
 
         <Paper className='paper' style={{ 'minWidth': '50%' }}>
           <h3 className="subdued title_description">{d2.i18n.getTranslation('app_title_filter')}</h3>
+
+          <div style={{ 'width': '40%', 'float': 'left' }}>
+            <Checkbox label="Show Disabled Accounts"
+              checked={this.state.filterDisabled}
+              onCheck={this.handleFilterDisabled}
+              labelStyle={{ color: 'grey', fontSize: 'small' }}              
+              />
+            <Checkbox label="Include Child OUs"
+              checked={this.state.searchChildOUs}
+              onCheck={this.handleFilterChildOUs}
+              disabled={this.state.filterBy != 'ou' || this.state.ouRoot.id === this.state.filter}
+              labelStyle={{ color: 'grey', fontSize: 'small' }} 
+              />
+
+            <FilterBy value={this.state.filterBy}
+              onFilterChange={this.handleFilterChange}
+              groups={this.state.userGroups}
+              ouRoot={this.props.ouRoot}
+            />
+            {(this.state.processing === true) ? <CircularProgress /> : null}
+          </div>
+          <div style={{ 'width': '10%', 'float': 'left' }}>
+          </div>
           <div style={{ 'width': '50%', 'float': 'left' }}>
-            <Checkbox label="Enabled filter"
+            <Checkbox label="Filters"
               checked={this.state.filterstatus}
               onCheck={this.handlefilterstatus}
               labelStyle={{ color: 'grey', fontSize: 'small' }} />
             <SelectField value={this.state.type}
               onChange={this.handleTypeChange}
               autoWidth={true}
-              disabled={this.state.filterstatus == false}
+              disabled={!this.state.filterstatus}
               floatingLabelText={d2.i18n.getTranslation('app_lbl_finduser')}
               maxHeight={100}
               style={{ 'float': 'left' }}>
@@ -407,7 +432,7 @@ export default React.createClass({
                 max={180}
                 autoWidth={true}
                 onChange={this.handleLengthChange}
-                disabled={this.state.filterstatus == false}
+                disabled={!this.state.filterstatus}
                 style={{ marginBottom: '0px' }}
               />
             </div>
@@ -416,7 +441,7 @@ export default React.createClass({
               floatingLabelFixed={true}
               value={this.state.filterUsername}
               onChange={this.handleUserChange}
-              disabled={this.state.filterstatus == false} />
+              disabled={!this.state.filterstatus} />
             <div style={{ 'height': '25px' }}></div>
             <table>
               <tbody>
@@ -428,19 +453,17 @@ export default React.createClass({
                       primary={true}
                       disabled={this.state.processing}
                       onClick={this.process}
-                      disabled={this.state.filterstatus == false}
                       icon={<FontIcon className="material-icons">search</FontIcon>}
                       style={{ 'clear': 'both', 'float': 'left' }}
                     />
                   </td>
                   <td>
                     <RaisedButton
-                      label="Clear"
+                      label="Clear search"
                       labelPosition="before"
                       primary={true}
                       disabled={this.state.processing}
                       onClick={this.ClearFilters}
-                      disabled={this.state.filterstatus == false}
                       icon={<FontIcon className="material-icons">settings_backup_restore</FontIcon>}
                       style={{ 'clear': 'both', 'float': 'left' }}
                     />
@@ -450,26 +473,7 @@ export default React.createClass({
             </table>
 
           </div>
-          <div style={{ 'width': '10%', 'float': 'left' }}>
-          </div>
-          <div style={{ 'width': '40%', 'float': 'left' }}>
-            <Checkbox label="Show Disabled"
-              checked={this.state.filterDisabled}
-              onCheck={this.handleFilterDisabled}
-              labelStyle={{ color: 'grey', fontSize: 'small' }} />
-            <Checkbox label="Include Child OUs"
-              checked={this.state.searchChildOUs}
-              onCheck={this.handleFilterChildOUs}
-              disabled={this.state.filterBy != 'ou' || this.state.ouRoot.id === this.state.filter}
-              labelStyle={{ color: 'grey', fontSize: 'small' }} />
 
-            <FilterBy value={this.state.filterBy}
-              onFilterChange={this.handleFilterChange}
-              groups={this.state.userGroups}
-              ouRoot={this.props.ouRoot}
-            />
-            {(this.state.processing === true) ? <CircularProgress /> : null}
-          </div>
 
         </Paper>
 
@@ -512,7 +516,7 @@ export default React.createClass({
 
         <Paper className='paper'>
           <ul>
-            <li>Total Records: {this.state.pager.total}</li>
+            {/* <li>Total Records: {this.state.pager.total}</li> */}
             <li> Loaded: {this.state.data.length} </li>
             <li>errors:{this.state.errors}</li>
           </ul>
