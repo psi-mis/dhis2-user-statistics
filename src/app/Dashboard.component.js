@@ -394,7 +394,7 @@ export default React.createClass({
           <FilterBy value={this.state.filterBy}
             onFilterChange={this.handleFilterChange}
             groups={this.props.groups}
-            ouRoot={this.props.ouRoot}
+            /* ouRoot={this.props.ouRoot} */
           />
 
         </Paper>

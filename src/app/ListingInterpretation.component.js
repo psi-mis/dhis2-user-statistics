@@ -123,6 +123,9 @@ export default React.createClass({
     var lastdateComment = null;
     dataValues.map((dataValue) => {
       //add Interpretation
+      if(dataValue.user==undefined){
+        dataValue.user=dataValue.reportTable.user;
+      }
       var index = aggregateValue.findIndex(x => x.user === dataValue.user.id);
       if (index === -1) {
         aggregateValue.push({ "id": dataValue.id, "user": dataValue.user.id, "userName": dataValue.user.name, "InterpretationCreated": dataValue.created, "commentCreated": "1900-01-01", userGroups: dataValue.user.userGroups, organisationUnits: dataValue.user.organisationUnits, "totalInterpretation": 1, "totalComment": 0 });
@@ -169,7 +172,8 @@ export default React.createClass({
     var lastLoginDate = new Date();
     lastLoginDate.setDate(lastLoginDate.getDate() - this.state.days);
     let search = {
-      fields: 'id,type,user[name,id,userGroups[id],organisationUnits[id,path]],created,lastUpdated,comments[id,user[name,id,userGroups[id],organisationUnits[id,path]],created,lastUpdated]'
+      fields: 'id,type,user[name,id,userGroups[id],organisationUnits[id,path]],created,lastUpdated,comments[id,user[name,id,userGroups[id],organisationUnits[id,path]],created,lastUpdated],reportTable[user[name,id,userGroups[id],organisationUnits[id,path]]]',
+      paging:false
     };
     api.get('interpretations', search).then(promise => {
       if (promise.hasOwnProperty('interpretations')) {

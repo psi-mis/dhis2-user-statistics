@@ -93,7 +93,7 @@ export default React.createClass({
     this.setState({
       userGroupsFiltered: fg,
       userGroups: this.props.groups,
-      ouRoot: this.props.ouRoot,
+      ouRoot: null,
       waiting: 0,
     });
     // this.getGroupLoginStats(false).then(res=>{
@@ -250,6 +250,7 @@ export default React.createClass({
           this.setState({
             userGroupsFiltered: respChard
           });
+          this.setState({ waiting: this.state.waiting - 1 });
         });
       });
     });
@@ -284,6 +285,9 @@ export default React.createClass({
     var lastdateInterpretation = null;
     var lastdateComment = null;
     dataValues.map((dataValue) => {
+      if(dataValue.user==undefined){
+        dataValue.user=dataValue.reportTable.user;
+      }
       dataValue.user.userGroups.map((userGroup) => {
         //verify if user group already there exist in array
         var index = aggregateValue.findIndex(x => x.id === dataValue.user.id + "-" + userGroup.id);
@@ -377,10 +381,12 @@ export default React.createClass({
 
   //Find total users in group/ou
   async  getReport() {
+    this.setState({ waiting: this.state.waiting + 1 });
     const d2 = this.props.d2;
     const api = d2.Api.getApi();
     let search = {
-      fields: 'id,type,user[name,id,userGroups[id,name]],created,lastUpdated,comments[id,user[name,id,userGroups[id,name,attributeValue]],created,lastUpdated]'
+      fields: 'id,type,user[name,id,userGroups[id,name,attributeValue]],created,lastUpdated,comments[id,user[name,id,userGroups[id,name,attributeValue]],created,lastUpdated],reportTable[user[id,userGroups[id,name,attributeValue]]]',
+      paging:false
     };
     let resultApi = await api.get('interpretations', search)
     if (resultApi.hasOwnProperty('interpretations')) {
@@ -457,7 +463,7 @@ export default React.createClass({
           <FilterBy value={this.state.filterBy}
             onFilterChange={this.handleFilterChange}
             groups={this.props.groups}
-            ouRoot={this.props.ouRoot}
+             /* ouRoot={this.props.ouRoot} */
           />
 
         </Paper>
