@@ -282,8 +282,8 @@ export default React.createClass({
 
   async aggregateResult(dataValues) {
     var aggregateValue = [];
-    var lastdateInterpretation = null;
-    var lastdateComment = null;
+    var lastdateInterpretation=[];
+    var lastdateComment=[];
     dataValues.map((dataValue) => {
       if(dataValue.user==undefined){
         dataValue.user=dataValue.reportTable.user;
@@ -296,9 +296,9 @@ export default React.createClass({
         }
         else {
           var dateInterpretation = new Date(dataValue.created);
-          if (dateInterpretation > lastdateInterpretation) {
+          if (dateInterpretation > lastdateInterpretation[dataValue.user.id]) {
             aggregateValue[index] = { "id": dataValue.user.id + "-" + userGroup.id, "user": dataValue.user.id, "userName": dataValue.user.name, "created": dataValue.created, "userGroupName": userGroup.name, "userGroupId": userGroup.id };
-            lastdateInterpretation = dateInterpretation;
+            lastdateInterpretation[dataValue.user.id] = dateInterpretation;
           }
         }
 
@@ -311,8 +311,9 @@ export default React.createClass({
           }
           else {
             var dateComment = new Date(dataValuecomm.created);
-            if (dateComment > lastdateComment) {
+            if (dateComment > lastdateComment[userGroupCom.id]) {
               aggregateValue[indexm] = { "id": dataValuecomm.user.id + "-" + userGroupCom.id, "user": dataValuecomm.user.id, "userName": dataValuecomm.user.name, "created": dataValuecomm.created, "userGroupName": userGroupCom.name, "userGroupId": userGroupCom.id };
+              lastdateComment[userGroupCom.id]=dateComment;
             }
           }
         });
@@ -331,7 +332,7 @@ export default React.createClass({
     };
     return 0;
   },
-  //set result to Chart value 
+  //set result to Chart value  and it group by userGroup counting the number of interprettion created by each user in current group
   async SetChart(dataValuesAgregated) {
     var aggregateCaregory = [];
     var lastdateInterpretation = null;
@@ -342,7 +343,7 @@ export default React.createClass({
       var currentDate = new Date();
       let category = this.getCategory(dataValue.created.substring(0, 10), currentDate.toISOString().substring(0, 10));
       //verify if user grup already there exist in array
-      var index = aggregateCaregory.findIndex(x => (x.userGroupid === dataValue.userGroupid));
+      var index = aggregateCaregory.findIndex(x => (x.id === dataValue.userGroupId));
       try {
         if (this.state.userGroups[dataValue.userGroupId] != undefined) {
           //get list all user 
@@ -423,7 +424,7 @@ export default React.createClass({
       chart: { type: 'bar', },
       title: { text: 'Interpretations and Comments by Group' },
       xAxis: { categories: [], title: { text: 'User Group' }, },
-      yAxis: { min: 0, title: { text: '% of users who have Interpreted or Commented in within X dayss' } },
+      yAxis: { min: 0, title: { text: '% of users who have Interpreted or Commented in within X days' } },
       legend: { reversed: false },
       tooltip: {
         pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>',
