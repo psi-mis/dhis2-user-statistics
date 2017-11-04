@@ -77,7 +77,8 @@ export default React.createClass({
       data: [],
       tags: [],
       suggestions: [],
-      pager: { page: 0, pageCount: 0, pageSize: 0, total: 0 }
+      pager: { page: 0, pageCount: 0, pageSize: 0, total: 0 },
+      disabledfiter:true
     };
   },
   //make sure we have our necessary select box data
@@ -100,6 +101,7 @@ export default React.createClass({
   ClearFilters() {
     this.setState({ filterUsername: "" });
     this.setState({ type: "commInt" });
+    this.setState({disabledfiter:true});
   },
   //add groups 
   addGroups(uid) {
@@ -182,12 +184,14 @@ export default React.createClass({
           data: dataValue,
           pager: { total: dataValue.length },
           processing: false,
+          disabledfiter: false
         });
       }
       else {
         this.setState({
           data: [],
           processing: false,
+          disabledfiter:true
         })
       }
     })
@@ -333,11 +337,12 @@ export default React.createClass({
               floatingLabelText="With name containing"
               floatingLabelFixed={true}
               value={this.state.filterUsername}
+              disabled={this.state.disabledfiter}
               onChange={this.handleUserChange} />
             <Checkbox label="Include Child OUs"
               checked={this.state.searchChildOUs}
               onCheck={this.handleFilterChildOUs}
-              disabled={this.state.filterBy != 'ou' || this.state.ouRoot.id === this.state.filter}
+              disabled={this.state.filterBy != 'ou' || this.state.ouRoot.id === this.state.filter || disabledfiter==true}
               labelStyle={{ color: 'grey', fontSize: 'small' }}
             />
 
@@ -347,6 +352,7 @@ export default React.createClass({
               onFilterChange={this.handleFilterChange}
               groups={this.state.userGroups}
               ouRoot={this.props.ouRoot}
+              disabledFilter={this.state.disabledfiter}
             />
           </div>
           <div style={{ 'width': '40%', 'float': 'right' }}>
@@ -368,7 +374,7 @@ export default React.createClass({
                   </td>
                   <td>
                     <RaisedButton
-                      label="Clear search"
+                      label="Clear filter"
                       labelPosition="before"
                       primary={true}
                       disabled={this.state.processing}

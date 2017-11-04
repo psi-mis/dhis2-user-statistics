@@ -22,6 +22,7 @@ export default React.createClass({
         groups: React.PropTypes.object.isRequired,
         //ouRoot: React.PropTypes.object.isRequired,
         onFilterChange: React.PropTypes.func.isRequired,
+        disabledFilter: React.PropTypes.func.isRequired,
     },
 
     contextTypes: {
@@ -34,6 +35,7 @@ export default React.createClass({
           filter:null,
           ouRoot:null,        // top of the OU tree, needed for OrgUnitTree
           userGroups:{},      // all user groups, needed for filter
+          disabledFilter:true,
         };
     },
 
@@ -45,7 +47,8 @@ export default React.createClass({
       }
       this.setState({
         userGroups:this.props.groups,
-        ouRoot:our
+        ouRoot:our,
+        disabledFilter:this.props.disabledFilter
       });
     },
 
@@ -57,7 +60,8 @@ export default React.createClass({
       }
       this.setState({
         userGroups:nextProps.groups,
-        ouRoot:our
+        ouRoot:our,
+        disabledFilter:nextProps.disabledFilter
       });
     },
 
@@ -129,7 +133,8 @@ export default React.createClass({
                           floatingLabelText='Select Type'
                           maxHeight={200}
                           autoWidth={true}
-                          style={{'float':'left'}}>
+                          style={{'float':'left'}}
+                          disabled={this.state.disabledFilter}>
               <MenuItem value='none' key='none' primaryText='-' />
               <MenuItem value='group' key='group' primaryText='User Group' />
               {this.props.ouRoot!=null?(
