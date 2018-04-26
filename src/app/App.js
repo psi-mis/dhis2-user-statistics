@@ -2,8 +2,7 @@ import React from 'react';
 import HeaderBarComponent from 'd2-ui/lib/app-header/HeaderBar';
 import headerBarStore$ from 'd2-ui/lib/app-header/headerBar.store';
 import withStateFrom from 'd2-ui/lib/component-helpers/withStateFrom';
-import Sidebar from 'd2-ui/lib/sidebar/Sidebar.component';
-
+import LoadingMask from 'd2-ui/lib/loading-mask/LoadingMask.component';
 import Snackbar from 'material-ui/lib/snackbar';
 import FontIcon from 'material-ui/lib/font-icon';
 
@@ -12,7 +11,7 @@ import actions from '../actions';
 import '../translationRegistration';
 let injectTapEventPlugin = require("react-tap-event-plugin");
 injectTapEventPlugin();
-
+  
 const HeaderBar = withStateFrom(headerBarStore$, HeaderBarComponent);
 
 import Listing  from './Listing.component.js';
@@ -158,6 +157,12 @@ export default React.createClass({
     },
 
     renderSection(key, apps, showUpload) {
+      if(Object.keys(this.state.groupStore).length===0){
+        return (<LoadingMask />);
+      }
+      else{
+
+     
       const d2 = this.props.d2;
       switch (key) {
         // case "activity":
@@ -192,6 +197,7 @@ export default React.createClass({
         default:
           return (<Dashboard d2={d2} attribs={this.state.attrStore} groups={this.state.groupStore}  ouRoot={this.state.ouRoot} />);
       }
+    }
     },
 
     render() {
@@ -210,7 +216,6 @@ export default React.createClass({
 
       return (
           <div className="app-wrapper">
-           
            <HeaderBar />
             
             
@@ -218,8 +223,8 @@ export default React.createClass({
                 <h1 className="appheader">{d2.i18n.getTranslation('app_name')}</h1>
                 <div className="separator"></div>
                 <TabList>
-                  <Tab><FontIcon className="material-icons">Dashboard</FontIcon> {d2.i18n.getTranslation('app_dashboard_user_access')}</Tab>
-                  <Tab><FontIcon className="material-icons">Listing</FontIcon>{d2.i18n.getTranslation('app_listing_user_access')}</Tab>
+                  <Tab><FontIcon className="material-icons">dashboard</FontIcon> {d2.i18n.getTranslation('app_dashboard_user_access')}</Tab>
+                  <Tab><FontIcon className="material-icons">listing</FontIcon>{d2.i18n.getTranslation('app_listing_user_access')}</Tab>
                   <Tab><FontIcon className="material-icons">dashboard</FontIcon> {d2.i18n.getTranslation('app_dashboard_user_interpretation')}</Tab>
                   <Tab><FontIcon className="material-icons">listing</FontIcon>{d2.i18n.getTranslation('app_listing_user_interpretation')}</Tab>
                   

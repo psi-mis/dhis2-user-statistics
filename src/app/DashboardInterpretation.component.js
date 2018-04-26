@@ -15,8 +15,10 @@ import AppTheme from '../colortheme';
 import actions from '../actions';
 import HelpDialog from './HelpDialog.component';
 
-import ChartInterpretation from './ChartInterpretation.component';
-import FilterBy from './Filter.component.js';
+import ChartInterpretation from './Chart.component';
+import FilterBy from './Filter.UserGroup.component.js';
+
+import LoadingMask from 'd2-ui/lib/loading-mask/LoadingMask.component';
 
 //the day ranges for displaying data
 const loginStatusRanges = [7, 30, 60, 'Older'];
@@ -76,82 +78,62 @@ export default React.createClass({
       attributeID: '',
       userGroupsFiltered: {},  // default display groups
       rawUserGroups: {},
+      UserGroupsAgrupated:{},
       customFilterBy: null,
       customFilter: null,
 
       userAll: {},
       ouLevel: 1,
       waiting: 0,
+      renderListGroups:false,
+      renderChart:false,
     };
   },
 
   componentDidMount() {
-    let fg = {};
     if (Object.keys(this.props.groups).length > 0) {
-      // fg = this.filterGroups(this.props.groups);
+      this.setState({
+        waiting:1,
+        renderChart: false,
+        userGroups:this.props.groups
+      });
+      this.initReport();
     }
-    this.setState({
-      userGroupsFiltered: fg,
-      userGroups: this.props.groups,
-      ouRoot: null,
-      waiting: 0,
-    });
-    // this.getGroupLoginStats(false).then(res=>{
-    //   this.setState({userAll:{
-    //     all:{
-    //       displayName:'All',
-    //       id:'all',
-    //       data:res
-    //     }
-    //   }})
-    // });
-
+  },
+  clearAllSelected(){
+    this.setState({userGroupsFiltered:{}});
+  },
+  initReport() {
+    //init object
+    let groups = this.props.groups;
+    let filtered = this.filterGroups(groups);
+    let arrUg=Object.keys(filtered);
+    //get grouo with statistic information
+    this.handleReportStatus().then(respGroup=>{    
+       //setting statistic information to group preselected       
+       for (let ug of arrUg ) {
+        this.addGroup(ug) 
+      }
+      this.setState({renderListGroups:true,renderChart:true});
+    })    
   },
 
-
-
-  //group data from App.js
-  componentWillReceiveProps(nextProps) {
-
-    // this.getGroupLoginStats(false).then(res=>{
-    //   this.setState({userAll:{
-    //     all:{
-    //       displayName:'All',
-    //       id:'all',
-    //       data:res
-    //     }
-    //   }})
-    // });
-
-    // let groups = nextProps.groups;
-    // let filtered = this.filterGroups(groups);
-    // this.setState({
-    //   waiting:Object.keys(filtered).length,
-    //   userGroups:groups
-    // });
-    // for (let ug of Object.keys(filtered)){
-    //   this.getGroupLoginStats(ug).then(res=>{
-    //    filtered[ug]['data']=res;
-    //    this.setState({
-    //      userGroupsFiltered:filtered,
-    //      waiting:this.state.waiting-1,
-    //    })
-    //   });
-    // }
-  },
 
   //THey want to show a specific User group or org here
   handleFilterChange(filterBy, value) {
-    this.handleReportStatus();
     this.setState({
       customFilterBy: filterBy,
-      customFilter: value
+      customFilter: value,
+      renderChart:false
     });
-    console.log("CUSTOM CHART:", value);
+    //console.log("CUSTOM CHART:", value);
     if (filterBy === 'group' && value !== null) {
-      this.setState({ waiting: this.state.waiting + 1 });
-      this.addGroup(value);
-
+      if(this.state.userGroupsFiltered[value]){
+        delete this.state.userGroupsFiltered[value];
+      }
+      else{
+        this.addGroup(value);
+      }      
     }
   },
 
@@ -162,7 +144,7 @@ export default React.createClass({
     }
     for (let a of Object.keys(this.props.attribs)) {
       if (this.props.attribs[a] === DASH_USERGROUPS_CODE) {
-        this.setState({ attributeID: a });
+        this.setState({ attributeID: a,renderChart:true });
         return a;
       }
     }
@@ -176,10 +158,10 @@ export default React.createClass({
     }
     else {
       this.state.userGroupsFiltered[uid] = { "id": uid, "displayName": this.props.groups[uid].displayName, "data": { "7 Days": 0, "15 Days": 0, "30 Days": 0, "60 Days": 0, "Older": 0, "None": this.props.groups[uid].users.length } };
-
     }
-    this.setState({ waiting: 0 });
+    this.setState({ waiting: 0, renderChart:false });
   },
+
   //filter out all non FILTER attributed groups
   filterGroups(groups) {
     //find the user group attrib ID for displayable UserGroups on the dashboard
@@ -204,58 +186,15 @@ export default React.createClass({
     return g;
   },
 
-  //api/organisationUnits?fields=id,name,attributeValues&filter=attributeValues.attribute.id:eq:Zad5fRBS0c1
-  filterOUs() {
-    const d2 = this.props.d2;
-    const api = d2.Api.getApi();
-    let attributeID = this.getAttributeID();
-    let search = {
-      fields: 'id',
-      pageSize: 1,
-    };
-    search.filter = ['attributeValues.attribute.id:eq:' + attributeID];
-    api.get('organisationUnits', search).then(res => {
-
-      console.log(res);
-
-      for (let ug of Object.keys(ous)) {
-        if (groups[ug].hasOwnProperty('attributeValues')) {
-          for (let attr in groups[ug].attributeValues) {
-            if (groups[ug].attributeValues[attr].attribute.id === attributeID) {
-              if (groups[ug].attributeValues[attr].value === 'true') {
-                g[ug] = groups[ug];
-              }
-            }
-          }
-        }
-      }
-
-      if (u.hasOwnProperty('pager') && u.pager.hasOwnProperty('total')) {
-        return u.pager.total;
-      }
-
-    });
+  async handleReportStatus() {
+    let responseReport= await this.getReport();
+    let resAgregated = await this.aggregateResult(responseReport);
+    let respChard= await this.SetChart(this.state.UserGroupsAgrupated);
+    this.setState({renderChart:true});
+    return respChard;
+ },
 
 
-  },
-
-  //switch the type of search
-  handleReportStatus() {
-    this.getReport().then(responseReport => {
-      this.aggregateResult(responseReport).then(resAgregated => {
-        this.SetChart(resAgregated).then(respChard => {
-          this.setState({
-            userGroupsFiltered: respChard
-          });
-          this.setState({
-            userGroupsFiltered: respChard
-          });
-          this.setState({ waiting: this.state.waiting - 1 });
-        });
-      });
-    });
-    // this.setState({ reportStatus: true });
-  },
   //Get different in days  between two dates.
   getCategory(dateinit, dateend) {
     var DateInitt = new Date(dateinit).getTime();
@@ -284,7 +223,7 @@ export default React.createClass({
     var aggregateValue = [];
     var lastdateInterpretation=[];
     var lastdateComment=[];
-    dataValues.map((dataValue) => {
+    return  dataValues.map((dataValue) => {
       if(dataValue.user==undefined){
         dataValue.user=dataValue.reportTable.user;
       }
@@ -319,8 +258,13 @@ export default React.createClass({
         });
 
       });
+      if(dataValues[dataValues.length-1].id==dataValue.id){
+        this.setState({UserGroupsAgrupated:aggregateValue,renderChart:false});
+        return aggregateValue;
+      }
+      
     });
-    return aggregateValue;
+  
   },
   getGroup(uid) {
     let groups = this.state.userGroups;
@@ -338,7 +282,7 @@ export default React.createClass({
     var lastdateInterpretation = null;
     var lastdateComment = null;
     let fg = {};
-    dataValuesAgregated.map((dataValue) => {
+    return dataValuesAgregated.map((dataValue) => {
       //add Interpretation
       var currentDate = new Date();
       let category = this.getCategory(dataValue.created.substring(0, 10), currentDate.toISOString().substring(0, 10));
@@ -370,19 +314,17 @@ export default React.createClass({
       catch (err) {
         console.log("error usuario no tiene acceso al grupo " + dataValue.userGroupName);
       };
-
+      if(dataValuesAgregated[dataValuesAgregated.length-1].id==dataValue.id){
+        this.setState({rawUserGroups:aggregateCaregory,renderChart:false});
+        return aggregateCaregory; 
+      }
+      
     });
-    this.setState({
-      rawUserGroups: aggregateCaregory
-    });
-
-    fg = this.filterGroups(aggregateCaregory);
-    return fg;
+ 
   },
 
   //Find total users in group/ou
   async  getReport() {
-    this.setState({ waiting: this.state.waiting + 1 });
     const d2 = this.props.d2;
     const api = d2.Api.getApi();
     let search = {
@@ -396,29 +338,14 @@ export default React.createClass({
     else {
       this.setState({
         data: {},
-        processing: false,
+        renderChart:false
       });
       return null;
     }
   },
+  rendercomponents(){
 
-  render() {
     const d2 = this.props.d2;
-    let options_all = {
-      colors: loginStatusColors,
-      chart: { type: 'bar' },
-      title: { text: 'Overall Active Login Status' },
-      xAxis: { categories: [], },
-      yAxis: { min: 0, title: { text: '% of users who have Interpreted or Commented in within X days' } },
-      legend: { reversed: false },
-      tooltip: {
-        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>',
-        shared: true
-      },
-      plotOptions: { series: { stacking: 'percent' } },
-      series: [{ "name": "7 Days" }, { "name": "15 Days" }, { "name": "30 Days" }, { "name": "60 Days" }, { "name": "Older" }, { "name": "None" }]
-    };
-
     let options_groups = {
       colors: loginStatusColors,
       chart: { type: 'bar', },
@@ -444,49 +371,49 @@ export default React.createClass({
     }
 
     return (
-      <div className="wrapper">
-        <HelpDialog style={{ float: "right" }} title={"App Help"} content={help.help} />
+    <div className="wrapper">
+    <HelpDialog style={{ float: "right" }} title={"App Help"} content={help.help} />
 
-        <Paper style={{ 'width': '35%', 'float': 'right', 'padding': '5px' }}>
+    <Paper style={{ 'width': '35%', 'float': 'right', 'padding': '5px' }}>
+      <p>Add additional groups:</p>
+      <FilterBy value={this.state.filterBy}
+        onFilterChange={this.handleFilterChange}
+        groups={this.props.groups}
+        groupsfiltered={this.state.userGroupsFiltered}
+        disabled={this.state.processing}
+        clearSelected={this.clearAllSelected}
+      />
+      <br/>
+      <RaisedButton
+        label="See report"
+        labelPosition="before"
+        primary={true}
+        disabled={this.state.processing}
+        onClick={this.handleReportStatus}
+        icon={<FontIcon className="material-icons">play_for_work</FontIcon>}
+        style={{ 'clear': 'both' }}
+      />
+    </Paper>
 
-          <RaisedButton
-            label="Get report"
-            labelPosition="before"
-            primary={true}
-            disabled={this.state.processing}
-            onClick={this.handleReportStatus}
-            disabled={this.state.filterstatus == false}
-            icon={<FontIcon className="material-icons">play_for_work</FontIcon>}
-            style={{ 'clear': 'both' }}
-          />
-          <div style={{ height: "20px" }} ></div>
-          <p>Add additional groups:</p>
-          <FilterBy value={this.state.filterBy}
-            onFilterChange={this.handleFilterChange}
-            groups={this.props.groups}
-             /* ouRoot={this.props.ouRoot} */
-          />
+    <Paper className='paper' style={{ 'width': '61%' }}>
+      <h3 className="subdued title_description">{d2.i18n.getTranslation('app_dashboard_user_interpretation')}</h3>
+      <ChartInterpretation container='chartGroups' options={options_groups} groups={this.state.userGroupsFiltered} renderChart={this.state.renderChart}  />
 
-        </Paper>
+      {(haveGroups === true && haveFilteredGroups === false) ?
+        (<p>No user groups with the {DASH_USERGROUPS_CODE} attribute found. Consult the help docs.</p>) : null
+      }
+      {(this.state.waiting && this.state.waiting > 0) ? <CircularProgress size={1} style={{ float: 'right' }} /> : null}
+    </Paper>
 
-        <Paper className='paper' style={{ 'width': '61%' }}>
-          <h3 className="subdued title_description">{d2.i18n.getTranslation('app_dashboard_user_interpretation')}</h3>
-          {/*   this isn't working when returning to the page after clicking on the Listing tab
-                {Object.keys(this.state.userGroups).length>0?(
-                  <ChartInterpretation container='chartAll' options={options_all} groups={this.state.userAll} />):null
-                }
-*/}
-          <ChartInterpretation container='chartGroups' options={options_groups} groups={this.state.userGroupsFiltered} />
-
-          {(haveGroups === true && haveFilteredGroups === false) ?
-            (<p>No user groups with the {DASH_USERGROUPS_CODE} attribute found. Consult the help docs.</p>) : null
-          }
-
-
-          {(this.state.waiting && this.state.waiting > 0) ? <CircularProgress size={1} style={{ float: 'right' }} /> : null}
-        </Paper>
-
+  </div>
+    )
+  },
+  render() {
+    return (
+      <div>
+        {this.state.renderListGroups?this.rendercomponents():<LoadingMask />}
       </div>
+      
     );
   },
 });

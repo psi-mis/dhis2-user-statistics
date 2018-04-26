@@ -319,8 +319,8 @@ export default React.createClass({
       return (
         <TableRow key={row.id}>
           <TableRowColumn>{row.userName}</TableRowColumn>
-          <TableRowColumn>{(row.InterpretationCreated == "1900-01-01" ? "-" : row.InterpretationCreated)}</TableRowColumn>
-          <TableRowColumn>{(row.commentCreated == "1900-01-01" ? "-" : row.commentCreated)}</TableRowColumn>
+          <TableRowColumn>{(row.InterpretationCreated == "1900-01-01" ? "-" : row.InterpretationCreated.substring(0, 10))}</TableRowColumn>
+          <TableRowColumn>{(row.commentCreated == "1900-01-01" ? "-" : row.commentCreated.substring(0, 10))}</TableRowColumn>
           <TableRowColumn>{row.totalInterpretation}</TableRowColumn>
           <TableRowColumn>{row.totalComment}</TableRowColumn>
         </TableRow>
@@ -342,7 +342,7 @@ export default React.createClass({
             <Checkbox label="Include Child OUs"
               checked={this.state.searchChildOUs}
               onCheck={this.handleFilterChildOUs}
-              disabled={this.state.filterBy != 'ou' || this.state.ouRoot.id === this.state.filter || disabledfiter==true}
+              disabled={this.state.filterBy != 'ou' || this.state.ouRoot.id === this.state.filter || this.props.disabledfiter==true}
               labelStyle={{ color: 'grey', fontSize: 'small' }}
             />
 

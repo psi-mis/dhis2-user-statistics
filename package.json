@@ -60,7 +60,7 @@
     "loglevel": "^1.4.1",
     "material-ui": "0.14.4",
     "mocha": "^2.4.5",
-    "node-sass": "^3.8.0",
+    "node-sass": "^4.8.3",
     "react": "^0.14.8",
     "react-dom": "^0.14.8",
     "react-tabs": "^1.1.0",

@@ -370,7 +370,7 @@ export default React.createClass({
               }
             </IconButton>
           </TableRowColumn>
-          <TableRowColumn>{row.userCredentials.lastLogin}</TableRowColumn><TableRowColumn>{row.userCredentials.passwordLastUpdated}</TableRowColumn>
+          <TableRowColumn>{row.userCredentials.lastLogin.substring(0, 10)}</TableRowColumn>
         </TableRow>
       )
     });
@@ -497,9 +497,6 @@ export default React.createClass({
                       </TableHeaderColumn>
                 <TableHeaderColumn>
                   Last Login
-                      </TableHeaderColumn>
-                <TableHeaderColumn>
-                  Password Updated
                       </TableHeaderColumn>
               </TableRow>
             </TableHeader>

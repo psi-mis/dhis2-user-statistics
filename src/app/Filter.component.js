@@ -117,6 +117,7 @@ export default React.createClass({
             floatingLabelText="Group"
             value={this.state.filter}
             onChange={this.handleGroupChange}
+            autoWidth= {true}
           >
           {groups}
         </SelectField>

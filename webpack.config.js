@@ -23,11 +23,12 @@ try {
         console.info('Using default config');
         dhisConfig = {
             baseUrl: 'http://localhost:8080/',
-            authorization: 'Basic YWRtaW46ZGlzdHJpY3Q=', // admin:district
+            authorization: 'Basic YWRtaW46Q2xhdmUqMTIzNDU2', // admin:district
         };
     }
     
 }
+
 console.log(JSON.stringify(dhisConfig, null, 2), '\n');
 
 function log(req, res, opt) {
