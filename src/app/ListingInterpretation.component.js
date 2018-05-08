@@ -4,21 +4,16 @@ import { getInstance } from 'd2/lib/d2';
 import OrgUnitTree from 'd2-ui/lib/org-unit-tree/OrgUnitTree.component';
 
 
-import Paper from 'material-ui/lib/paper';
-import FontIcon from 'material-ui/lib/font-icon';
-import RaisedButton from 'material-ui/lib/raised-button';
-import IconButton from 'material-ui/lib/icon-button';
-import Snackbar from 'material-ui/lib/snackbar';
-import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn } from 'material-ui/lib/table';
-import CircularProgress from 'material-ui/lib/circular-progress';
+import Paper from 'material-ui/Paper';
+import FontIcon from 'material-ui/FontIcon';
+import RaisedButton from 'material-ui/RaisedButton';
 
-import SelectField from 'material-ui/lib/select-field';
-import MenuItem from 'material-ui/lib/menus/menu-item';
-import Checkbox from 'material-ui/lib/checkbox';
-import TextField from 'material-ui/lib/text-field';
-import TextFieldLabel from 'material-ui/lib/text-field';
-import Slider from 'material-ui/lib/slider';
-import { green500, red500 } from 'material-ui/lib/styles/colors';
+import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn } from 'material-ui/Table';
+import CircularProgress from 'material-ui/CircularProgress';
+
+import Checkbox from 'material-ui/CheckBox';
+import TextField from 'material-ui/TextField';
+import { green500, red500 } from 'material-ui/styles/colors';
 
 import FilterBy from './Filter.component.js';
 

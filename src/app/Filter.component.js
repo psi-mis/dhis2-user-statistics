@@ -3,13 +3,8 @@ import React from 'react';
 import { getInstance } from 'd2/lib/d2';
 import OrgUnitTree from 'd2-ui/lib/org-unit-tree/OrgUnitTree.component';
 
-import FontIcon from 'material-ui/lib/font-icon';
-import CircularProgress from 'material-ui/lib/circular-progress';
-
-import SelectField from 'material-ui/lib/select-field';
-import MenuItem from 'material-ui/lib/menus/menu-item';
-import TextField from 'material-ui/lib/text-field';
-import TextFieldLabel from 'material-ui/lib/text-field';
+import SelectField from 'material-ui/SelectField';
+import MenuItem from 'material-ui/MenuItem';
 
 import AppTheme from '../colortheme';
 

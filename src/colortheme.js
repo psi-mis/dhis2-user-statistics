@@ -1,26 +1,40 @@
-import Colors from 'material-ui/lib/styles/colors';
-import ColorManipulator from 'material-ui/lib/utils/color-manipulator';
-import Spacing from 'material-ui/lib/styles/spacing';
-import zIndex from 'material-ui/lib/styles/zIndex';
-import ThemeManager from 'material-ui/lib/styles/theme-manager';
+
+import{
+
+    lightBlue200,
+    lightBlue400,
+    lightBlue600,
+    deepPurple300,
+    grey100,
+    grey500,
+    darkBlack,
+    white,
+    grey300,
+    grey900,
+    cyan800
+} from 'material-ui/styles/colors';
+import { fade } from 'material-ui/utils/colorManipulator';
+import Spacing from 'material-ui/styles/spacing';
+import zIndex from 'material-ui/styles/zIndex';
+import getMuiTheme from 'material-ui/styles/getMuiTheme';
 
 const theme = {
     spacing: Spacing,
     zIndex: zIndex,
     fontFamily: 'Roboto, sans-serif',
     palette: {
-        primary1Color: Colors.lightblue200,
-        primary2Color: Colors.lightblue400,
-        primary3Color: Colors.lightblue600,
-        accent1Color: Colors.deeppurple300,
-        accent2Color: Colors.grey100,
-        accent3Color: Colors.grey500,
-        textColor: Colors.darkBlack,
-        alternateTextColor: Colors.white,
-        canvasColor: Colors.white,
-        borderColor: Colors.grey300,
-        disabledColor: ColorManipulator.fade(Colors.darkBlack, 0.3),
-        pickerHeaderColor: Colors.cyan800,
+        primary1Color: lightBlue200,
+        primary2Color: lightBlue400,
+        primary3Color: lightBlue600,
+        accent1Color: deepPurple300,
+        accent2Color: grey100,
+        accent3Color: grey500,
+        textColor: darkBlack,
+        alternateTextColor: white,
+        canvasColor: white,
+        borderColor: grey300,
+        disabledColor: fade(grey900, 0.3),
+        pickerHeaderColor: cyan800,
 
     }
 };
@@ -43,7 +57,7 @@ function createAppTheme(style) {
     };
 }
 
-const muiTheme = ThemeManager.getMuiTheme(theme);
+const muiTheme = getMuiTheme(theme);
 const appTheme = createAppTheme(theme);
 
 export default Object.assign({}, muiTheme, appTheme);

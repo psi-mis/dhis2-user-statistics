@@ -2,18 +2,17 @@ import React from 'react';
 
 import { getInstance } from 'd2/lib/d2';
 
-import Paper from 'material-ui/lib/paper';
-import Snackbar from 'material-ui/lib/snackbar';
-import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn } from 'material-ui/lib/table';
-import CircularProgress from 'material-ui/lib/circular-progress';
-import RaisedButton from 'material-ui/lib/raised-button';
-import FontIcon from 'material-ui/lib/font-icon';
+import Paper from 'material-ui/Paper';
+import Snackbar from 'material-ui/Snackbar';
+import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn } from 'material-ui/Table';
+import CircularProgress from 'material-ui/CircularProgress';
+import RaisedButton from 'material-ui/RaisedButton';
+import FontIcon from 'material-ui/FontIcon';
 
-import { green300,lime300, lightGreen300, yellow300, orange300, deepOrange300, red300 } from 'material-ui/lib/styles/colors';
+import { green300,lime300, lightGreen300, yellow300, orange300, deepOrange300, red300 } from 'material-ui/styles/colors';
 
 import AppTheme from '../colortheme';
 import actions from '../actions';
-import HelpDialog from './HelpDialog.component';
 
 import ChartLogins from './Chart.component';
 import FilterBy from './Filter.UserGroup.component.js';
@@ -25,35 +24,6 @@ const loginStatusColors = [green300, lime300 , yellow300, orange300, deepOrange3
 
 const DASH_USERGROUPS_CODE = 'BATapp_ShowOnDashboard';
 
-const help = {
-  help: (
-    <div>
-      <p>
-        Summary metrics on user status.
-      </p>
-      <p>
-        <b>Login Status By Group</b> will show user groups that have the <i>{DASH_USERGROUPS_CODE}</i> attribute assigned.
-      </p>
-      <p>
-        Additional User Groups may be selected from the dropdown box.
-      </p>
-      <h3>Setup</h3>
-      <ul>
-        <li>Open the <b>Maintenance</b> app</li>
-        <li>Find the <b>Attribute</b> section</li>
-        <li>If it does not exist, create a new Attribute with <i>{DASH_USERGROUPS_CODE}</i> as the code. The name does not matter.</li>
-        <li>Set the <b>Value type</b> to be <i>Yes/No</i></li>
-        <li>Click the checkbox for <i>User group</i>, then Save</li>
-        <li>Open the <b>Users</b> app and give particular user groups this attribute.</li>
-      </ul>
-      <h3>Notes</h3>
-      <ul>
-        <li>For this app to function as intended, Non-SuperUsers must have a role containing "View User Group Managing Relationships".</li>
-        <li>For speed considerations the number of User Groups with the {DASH_USERGROUPS_CODE} attribute should be kept under 20 but may be more or less depending on the speed of your connection and DHIS2 server.</li>
-      </ul>
-    </div>
-  ),
-}
 const styles={
   textSeach:{
     width:'100%'
@@ -102,7 +72,7 @@ export default React.createClass({
   clearAllSelected(){
     this.setState({userGroupsFiltered:{}});
   },
-  getReport(){
+  seeReport(){
     console.log(this.state.userGroupsFiltered)
     this.setState({renderChart: true});
   },
@@ -306,7 +276,7 @@ export default React.createClass({
         labelPosition="before"
         primary={true}
         disabled={this.state.processing}
-        onClick={this.getReport}
+        onClick={this.seeReport}
         icon={<FontIcon className="material-icons">play_for_work</FontIcon>}
         style={{ 'clear': 'both' }}
       />

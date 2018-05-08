@@ -2,18 +2,17 @@ import React from 'react';
 
 import { getInstance } from 'd2/lib/d2';
 
-import Paper from 'material-ui/lib/paper';
-import Snackbar from 'material-ui/lib/snackbar';
-import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn } from 'material-ui/lib/table';
-import CircularProgress from 'material-ui/lib/circular-progress';
-import RaisedButton from 'material-ui/lib/raised-button';
-import FontIcon from 'material-ui/lib/font-icon';
+import Paper from 'material-ui/Paper';
+import Snackbar from 'material-ui/Snackbar';
+import { Table, TableBody, TableHeader, TableHeaderColumn, TableRow, TableRowColumn } from 'material-ui/Table';
+import CircularProgress from 'material-ui/CircularProgress';
+import RaisedButton from 'material-ui/RaisedButton';
+import FontIcon from 'material-ui/FontIcon';
 
-import { green300, lime300, lightGreen300, yellow300, orange300, deepOrange300, red300 } from 'material-ui/lib/styles/colors';
+import { green300, lime300, lightGreen300, yellow300, orange300, deepOrange300, red300 } from 'material-ui/styles/colors';
 
 import AppTheme from '../colortheme';
 import actions from '../actions';
-import HelpDialog from './HelpDialog.component';
 
 import ChartInterpretation from './Chart.component';
 import FilterBy from './Filter.UserGroup.component.js';
@@ -25,36 +24,6 @@ const loginStatusRanges = [7, 30, 60, 'Older'];
 const loginStatusColors = [green300, lime300, yellow300, orange300, deepOrange300, red300];
 
 const DASH_USERGROUPS_CODE = 'BATapp_ShowOnDashboard';
-
-const help = {
-  help: (
-    <div>
-      <p>
-        Summary metrics on user status.
-      </p>
-      <p>
-        <b>Login Status By Group</b> will show user groups that have the <i>{DASH_USERGROUPS_CODE}</i> attribute assigned.
-      </p>
-      <p>
-        Additional User Groups may be selected from the dropdown box.
-      </p>
-      <h3>Setup</h3>
-      <ul>
-        <li>Open the <b>Maintenance</b> app</li>
-        <li>Find the <b>Attribute</b> section</li>
-        <li>If it does not exist, create a new Attribute with <i>{DASH_USERGROUPS_CODE}</i> as the code. The name does not matter.</li>
-        <li>Set the <b>Value type</b> to be <i>Yes/No</i></li>
-        <li>Click the checkbox for <i>User group</i>, then Save</li>
-        <li>Open the <b>Users</b> app and give particular user groups this attribute.</li>
-      </ul>
-      <h3>Notes</h3>
-      <ul>
-        <li>For this app to function as intended, Non-SuperUsers must have a role containing "View User Group Managing Relationships".</li>
-        <li>For speed considerations the number of User Groups with the {DASH_USERGROUPS_CODE} attribute should be kept under 20 but may be more or less depending on the speed of your connection and DHIS2 server.</li>
-      </ul>
-    </div>
-  ),
-}
 
 // TODO: Rewrite as ES6 class
 /* eslint-disable react/prefer-es6-class */
@@ -124,12 +93,17 @@ export default React.createClass({
     this.setState({
       customFilterBy: filterBy,
       customFilter: value,
+      processing: true,
       renderChart:false
     });
     //console.log("CUSTOM CHART:", value);
     if (filterBy === 'group' && value !== null) {
       if(this.state.userGroupsFiltered[value]){
         delete this.state.userGroupsFiltered[value];
+        this.setState({
+          processing: false,
+          renderChart:false
+        })
       }
       else{
         this.addGroup(value);
@@ -159,7 +133,7 @@ export default React.createClass({
     else {
       this.state.userGroupsFiltered[uid] = { "id": uid, "displayName": this.props.groups[uid].displayName, "data": { "7 Days": 0, "15 Days": 0, "30 Days": 0, "60 Days": 0, "Older": 0, "None": this.props.groups[uid].users.length } };
     }
-    this.setState({ waiting: 0, renderChart:false });
+    this.setState({ waiting: 0, renderChart:false,processing: false });
   },
 
   //filter out all non FILTER attributed groups
@@ -185,12 +159,13 @@ export default React.createClass({
     }
     return g;
   },
-
+  seeReport(){
+    this.setState({renderChart:true});
+  },
   async handleReportStatus() {
     let responseReport= await this.getReport();
     let resAgregated = await this.aggregateResult(responseReport);
-    let respChard= await this.SetChart(this.state.UserGroupsAgrupated);
-    this.setState({renderChart:true});
+    let respChard= await this.SetChart(this.state.UserGroupsAgrupated);    
     return respChard;
  },
 
@@ -372,8 +347,6 @@ export default React.createClass({
 
     return (
     <div className="wrapper">
-    <HelpDialog style={{ float: "right" }} title={"App Help"} content={help.help} />
-
     <Paper style={{ 'width': '35%', 'float': 'right', 'padding': '5px' }}>
       <p>Add additional groups:</p>
       <FilterBy value={this.state.filterBy}
@@ -389,10 +362,11 @@ export default React.createClass({
         labelPosition="before"
         primary={true}
         disabled={this.state.processing}
-        onClick={this.handleReportStatus}
+        onClick={this.seeReport}
         icon={<FontIcon className="material-icons">play_for_work</FontIcon>}
         style={{ 'clear': 'both' }}
       />
+       {this.state.processing?<CircularProgress size={1} style={{ float: 'right' }} />:""}
     </Paper>
 
     <Paper className='paper' style={{ 'width': '61%' }}>

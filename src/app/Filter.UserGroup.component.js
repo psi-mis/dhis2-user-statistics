@@ -1,12 +1,12 @@
 import React from 'react';
 
 import { getInstance } from 'd2/lib/d2';
-import FontIcon from 'material-ui/lib/font-icon';
-import CircularProgress from 'material-ui/lib/circular-progress';
-import TextField from 'material-ui/lib/text-field';
-import FlatButton from 'material-ui/lib/flat-button';
-import {List, ListItem} from 'material-ui/lib/lists';
-import Checkbox from 'material-ui/lib/checkbox';
+import FontIcon from 'material-ui/FontIcon';
+import CircularProgress from 'material-ui/CircularProgress';
+import TextField from 'material-ui/TextField';
+import FlatButton from 'material-ui/FlatButton';
+import {List, ListItem} from 'material-ui/List';
+import Checkbox from 'material-ui/Checkbox';
 
 import AppTheme from '../colortheme';
 

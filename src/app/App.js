@@ -3,250 +3,285 @@ import HeaderBarComponent from 'd2-ui/lib/app-header/HeaderBar';
 import headerBarStore$ from 'd2-ui/lib/app-header/headerBar.store';
 import withStateFrom from 'd2-ui/lib/component-helpers/withStateFrom';
 import LoadingMask from 'd2-ui/lib/loading-mask/LoadingMask.component';
-import Snackbar from 'material-ui/lib/snackbar';
-import FontIcon from 'material-ui/lib/font-icon';
+import Snackbar from 'material-ui/Snackbar';
+import FontIcon from 'material-ui/FontIcon';
+import Paper from 'material-ui/Paper';
+import Chip from 'material-ui/Chip';
+import Avatar from 'material-ui/Avatar';
+import { teal600, grey300, grey50, grey900 } from 'material-ui/styles/colors';
 
 import AppTheme from '../colortheme';
 import actions from '../actions';
 import '../translationRegistration';
-let injectTapEventPlugin = require("react-tap-event-plugin");
-injectTapEventPlugin();
-  
+
 const HeaderBar = withStateFrom(headerBarStore$, HeaderBarComponent);
 
-import Listing  from './Listing.component.js';
-import ListingInterpretation  from './ListingInterpretation.component.js';
-import Dashboard  from './Dashboard.component.js';
-import DashboardInterpretation  from './DashboardInterpretation.component.js';
-//import Usage    from './Usage.component.js';
-//import Activity from './Activity.component.js';
-//
-// import installSqlViews from './sqlViews';
-// import SqlInstaller from '../sqlviewinstaller/Install.component.js';
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import Listing from './Listing.component.js';
+import ListingInterpretation from './ListingInterpretation.component.js';
+import Dashboard from './Dashboard.component.js';
+import DashboardInterpretation from './DashboardInterpretation.component.js';
+
+const style = {
+  paper: {
+    height: 65,
+    margin: -20,
+    width: '130%',
+    textAlign: 'center',
+    marginTop: 50
+  },
+  paperContent: {
+    height: '80%',
+    width: '80%',
+    marginTop: 20,
+    marginLeft: 10
+
+  },
+  titleSection: {
+    fontSize: 20,
+    paddingTop: 40,
+    marginLeft: 10,
+    fontWeight: 'bold'
+  },
+  chip: {
+    margin: 4,
+  },
+  itemChips: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    padding: 5,
+    justifySelf: 'stretch'
+
+  },
+  container: {
+    display: 'grid',
+    gridTemplateColumns: '25% auto',
+    alignItems: 'end'
+  },
+  item: {
+    padding: 20,
+    justifySelf: 'start'
+  }
+};
+
+const sections = [
+  { key: 'dUser', icon: 'dashboard', label: 'app_dashboard_user_access' },
+  { key: 'lUser', icon: 'listing', label: 'app_listing_user_access' },
+  { key: 'dInt', icon: 'dashboard', label: 'app_dashboard_user_interpretation' },
+  { key: 'LInt', icon: 'listing', label: 'app_listing_user_interpretation' },
+];
 
 export default React.createClass({
-    propTypes: {
-      d2: React.PropTypes.object,
-    },
+  propTypes: {
+    d2: React.PropTypes.object,
+  },
 
-    childContextTypes: {
-      d2: React.PropTypes.object,
-      muiTheme: React.PropTypes.object
-    },
+  childContextTypes: {
+    d2: React.PropTypes.object,
+    muiTheme: React.PropTypes.object
+  },
 
-    getChildContext() {
-      return {
-        d2: this.props.d2,
-        muiTheme: AppTheme
-      };
-    },
+  getChildContext() {
+    return {
+      d2: this.props.d2,
+      muiTheme: AppTheme
+    };
+  },
 
-    getInitialState() {
-      return {
-        attrStore: {},
-        groupStore: {},
-        ouRoot:{},
-      };
-    },
+  getInitialState() {
+    return {
+      attrStore: {},
+      groupStore: {},
+      ouRoot: {},
+      chipSelected: 'dUser'
 
-    //attribute cache for sub component use
-    async getAttributes() {
-      const d2 =this.props.d2;
-      const api = d2.Api.getApi();
-      let attrs = {};
-      try{
-        let res = await api.get('/attributes?paging=false&fields=name,code,id');
-        if (res.hasOwnProperty('attributes')){
-          for (let a of res.attributes){
-            attrs[a.id]=a.code;
-          }
+    };
+
+  },
+
+  //attribute cache for sub component use
+  async getAttributes() {
+    const d2 = this.props.d2;
+    const api = d2.Api.getApi();
+    let attrs = {};
+    try {
+      let res = await api.get('/attributes?paging=false&fields=name,code,id');
+      if (res.hasOwnProperty('attributes')) {
+        for (let a of res.attributes) {
+          attrs[a.id] = a.code;
         }
       }
-      catch(e){
-        console.error('Could not access Attributes from API');
-      }
-      return attrs;
-    },
+    }
+    catch (e) {
+      console.error('Could not access Attributes from API');
+    }
+    return attrs;
+  },
 
-    //user group cache for sub component use
-    async getUserGroups() {
-      const d2 =this.props.d2;
-      const api = d2.Api.getApi();
-      let groups = {};
-      try{
-        let res = await api.get('/userGroups?fields=id,displayName,attributeValues,users&paging=false');
-        if (res.hasOwnProperty('userGroups')){
-          for (let g of res.userGroups){
-            groups[g.id]=g;
-          }
+  //user group cache for sub component use
+  async getUserGroups() {
+    const d2 = this.props.d2;
+    const api = d2.Api.getApi();
+    let groups = {};
+    try {
+      let res = await api.get('/userGroups?fields=id,displayName,attributeValues,users&paging=false');
+      if (res.hasOwnProperty('userGroups')) {
+        for (let g of res.userGroups) {
+          groups[g.id] = g;
         }
       }
-      catch(e){
-        console.error('Could not access userGroups from API');
-      }
-      return groups;
-    },
+    }
+    catch (e) {
+      console.error('Could not access userGroups from API');
+    }
+    return groups;
+  },
 
-    //get the top of the OU tree
-    async getOuRoot() {
-      const d2 = this.props.d2;
-      const api = d2.Api.getApi();
-      try{
-        //get OU tree rootUnit
-        let rootLevel = await d2.models.organisationUnits.list({ paging: false, level: 1, fields: 'id,displayName,children::isNotEmpty' });
-        if (rootLevel){
-            return rootLevel.toArray()[0];
+  //get the top of the OU tree
+  async getOuRoot() {
+    const d2 = this.props.d2;
+    const api = d2.Api.getApi();
+    try {
+      //get OU tree rootUnit
+      let rootLevel = await d2.models.organisationUnits.list({ paging: false, level: 1, fields: 'id,displayName,children::isNotEmpty' });
+      if (rootLevel) {
+        return rootLevel.toArray()[0];
+      }
+    }
+    catch (e) {
+      console.error('Could not access userGroups from API');
+    }
+    return undefined;
+  },
+
+  componentWillMount() {
+    const d2 = this.props.d2;
+    const api = d2.Api.getApi();
+
+    let attribs = this.getAttributes();
+    let groups = this.getUserGroups();
+    let ouRoot = this.getOuRoot();
+    attribs.then(res => {
+      this.setState({ attrStore: res });
+    });
+    groups.then(res => {
+      this.setState({ groupStore: res });
+    });
+    ouRoot.then(res => {
+      this.setState({ ouRoot: res });
+    });
+  },
+
+  componentDidMount() {
+    this.subscriptions = [
+      actions.showSnackbarMessage.subscribe(params => {
+        if (!!this.state.snackbar) {
+          this.setState({ snackbar: undefined });
+          setTimeout(() => {
+            this.setState({ snackbar: params.data });
+          }, 150);
+        } else {
+          this.setState({ snackbar: params.data });
         }
-      }
-      catch(e){
-        console.error('Could not access userGroups from API');
-      }
-      return undefined;
-    },
+      }),
+    ];
+  },
 
-    componentWillMount(){
-      const d2 = this.props.d2;
-      const api = d2.Api.getApi();
+  componentWillUnmount() {
+    this.subscriptions.forEach(subscription => {
+      subscription.dispose();
+    });
+  },
 
-      let attribs = this.getAttributes();
-      let groups = this.getUserGroups();
-      let ouRoot = this.getOuRoot();
-      attribs.then(res=>{
-        this.setState({attrStore:res});
-      });
-      groups.then(res=>{
-        this.setState({groupStore:res});
-      });
-      ouRoot.then(res=>{
-        this.setState({ouRoot:res});
-      });
-    },
+  closeSnackbar() {
+    this.setState({ snackbar: undefined });
+  },
 
-    componentDidMount() {
-      this.subscriptions = [
-          actions.showSnackbarMessage.subscribe(params => {
-              if (!!this.state.snackbar) {
-                  this.setState({ snackbar: undefined });
-                  setTimeout(() => {
-                      this.setState({ snackbar: params.data });
-                  }, 150);
-              } else {
-                  this.setState({ snackbar: params.data });
-              }
-          }),
-      ];
-    },
+  showSnackbar(message) {
+    this.setState({ snackbar: message });
+  },
 
-    componentWillUnmount() {
-        this.subscriptions.forEach(subscription => {
-            subscription.dispose();
-        });
-    },
+  setSection(key) {
+    this.setState({ section: key });
+  },
 
-    closeSnackbar() {
-        this.setState({ snackbar: undefined });
-    },
+  renderSection(key, apps, showUpload) {
+    if (Object.keys(this.state.groupStore).length === 0) {
+      return (<LoadingMask />);
+    }
+    else {
 
-    showSnackbar(message) {
-        this.setState({ snackbar: message });
-    },
 
-    setSection(key) {
-        this.setState({ section: key });
-    },
-
-    renderSection(key, apps, showUpload) {
-      if(Object.keys(this.state.groupStore).length===0){
-        return (<LoadingMask />);
-      }
-      else{
-
-     
       const d2 = this.props.d2;
       switch (key) {
-        // case "activity":
-        //   return (<Activity d2={d2} />);
-        //   break;
-        //
-        // case "usage":
-        //   return (<Usage d2={d2} />);
-        //   break;
 
-        case "dashboard":
-          return (<Dashboard d2={d2} attribs={this.state.attrStore} groups={this.state.groupStore}  ouRoot={this.state.ouRoot} />);
+        case "dUser":
+          return (<Dashboard d2={d2} attribs={this.state.attrStore} groups={this.state.groupStore} ouRoot={this.state.ouRoot} />);
           break;
 
-        case "listing":
-          return (<Listing d2={d2} groups={this.state.groupStore} ouRoot={this.state.ouRoot}  />);
+        case "lUser":
+          return (<Listing d2={d2} groups={this.state.groupStore} ouRoot={this.state.ouRoot} />);
           break;
 
-        case "dashboardInterpretation":
-          return (<DashboardInterpretation d2={d2} attribs={this.state.attrStore} groups={this.state.groupStore}  ouRoot={this.state.ouRoot} />);
+        case "dInt":
+          return (<DashboardInterpretation d2={d2} attribs={this.state.attrStore} groups={this.state.groupStore} ouRoot={this.state.ouRoot} />);
           break;
 
-         case "listingInterpretation":
-          return (<ListingInterpretation d2={d2} groups={this.state.groupStore} ouRoot={this.state.ouRoot}  />);
+        case "LInt":
+          return (<ListingInterpretation d2={d2} groups={this.state.groupStore} ouRoot={this.state.ouRoot} />);
           break;
-
-        // case "sqlinstaller":
-        //   return (<SqlInstaller d2={d2} views={installSqlViews} />);
-        //   break;
 
         //Default page
         default:
-          return (<Dashboard d2={d2} attribs={this.state.attrStore} groups={this.state.groupStore}  ouRoot={this.state.ouRoot} />);
+          return (<Dashboard d2={d2} attribs={this.state.attrStore} groups={this.state.groupStore} ouRoot={this.state.ouRoot} />);
       }
     }
-    },
+  },
+  handleClick(chipKey) {
+    this.setState({ chipSelected: chipKey })
+  },
+  renderChip(data) {
+    const d2 = this.props.d2;
+    return (
+      <Chip
+        key={data.key}
+        style={style.chip}
+        onClick={(e) => this.handleClick(data.key)}
+        backgroundColor={(this.state.chipSelected == data.key ? teal600 : grey300)}
+        labelColor={(this.state.chipSelected == data.key ? grey50 : grey900)}
+      >
+        <Avatar backgroundColor={(this.state.chipSelected == data.key ? teal600 : grey300)} icon={<FontIcon className="material-icons">{data.icon}</FontIcon>} />
+        {d2.i18n.getTranslation(data.label)}
 
-    render() {
-      const d2 = this.props.d2;
-      const sections = [
-//          { key: 'dashboard', icon:'dashboard',         label:d2.i18n.getTranslation('app_dashboard'), },
-//          { key: 'listing', icon:'people_outline',      label:d2.i18n.getTranslation('app_listing'), },
-//          { key: 'sqlinstaller', icon:'settings_applications', label:'Installer', },
-//          { key: 'activity',icon:'person_pin',        label:d2.i18n.getTranslation('app_activity'), },
-//          { key: 'usage',   icon:'track_changes',     label:d2.i18n.getTranslation('app_usage'), },
-      ].map(section => ({
-          key: section.key,
-          label: section.label,
-          icon: <FontIcon className="material-icons">{section.icon}</FontIcon>,
-      }));
+      </Chip>
+    );
+  },
 
-      return (
-          <div className="app-wrapper">
-           <HeaderBar />
-            
-            
-              <Tabs>
-                <h1 className="appheader">{d2.i18n.getTranslation('app_name')}</h1>
-                <div className="separator"></div>
-                <TabList>
-                  <Tab><FontIcon className="material-icons">dashboard</FontIcon> {d2.i18n.getTranslation('app_dashboard_user_access')}</Tab>
-                  <Tab><FontIcon className="material-icons">listing</FontIcon>{d2.i18n.getTranslation('app_listing_user_access')}</Tab>
-                  <Tab><FontIcon className="material-icons">dashboard</FontIcon> {d2.i18n.getTranslation('app_dashboard_user_interpretation')}</Tab>
-                  <Tab><FontIcon className="material-icons">listing</FontIcon>{d2.i18n.getTranslation('app_listing_user_interpretation')}</Tab>
-                  
-                  
-                </TabList>
-                <TabPanel>
-                    {this.renderSection('dashboard')}                
-                </TabPanel>
-                <TabPanel>
-                  {this.renderSection('listing')}
-                </TabPanel>
-                 <TabPanel>
-                  {this.renderSection('dashboardInterpretation')}
-                </TabPanel>
-                 <TabPanel>
-                  {this.renderSection('listingInterpretation')}
-                </TabPanel>
-               
-              </Tabs>
+  render() {
+    const d2 = this.props.d2;
+
+    return (
+
+      <div>
+        <HeaderBar />
+        <Paper style={style.paper} zDepth={2}>
+          <div style={style.container}>
+            <div style={style.item}>
+              {d2.i18n.getTranslation('app_name')}
+            </div>
+            <div style={style.itemChips}>
+              {sections.map(this.renderChip, this)}
+            </div>
           </div>
-          
-          
-      );
-    },
+        </Paper>
+        <div style={style.titleSection}>
+            {d2.i18n.getTranslation(sections.filter(section => section.key == this.state.chipSelected)[0].label)}
+          </div>
+        <Paper style={style.paperContent} zDepth={1}>
+          {this.renderSection(this.state.chipSelected)}
+        </Paper>
+
+      </div>
+
+    );
+  },
 });

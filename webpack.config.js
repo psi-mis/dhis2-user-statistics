@@ -1,35 +1,26 @@
 'use strict';
 
-var webpack = require('webpack');
-var path = require('path');
-var colors = require('colors');
+const webpack = require('webpack');
+const path = require('path');
+const colors = require('colors');
 
 const isDevBuild = process.argv[1].indexOf('webpack-dev-server') !== -1;
-const dhisConfigPath = process.env.DHIS2_HOME && `${process.env.DHIS2_HOME}\\dhis.conf`;
-
+const dhisConfigPath = process.env.DHIS2_HOME && `${process.env.DHIS2_HOME}` && "\\dhis.conf";
 let dhisConfig;
 
 try {
     dhisConfig = require(dhisConfigPath);
-    console.log('\nLoaded DHIS config:');
 } catch (e) {
-        try{ //
-            dhisConfigPath = process.env.DHIS2_HOME && `${process.env.DHIS2_HOME}/config`;
-            dhisConfig = require(dhisConfigPath);
-            console.log('\nLoaded DHIS config Windows version:');
-        }catch(e){
-        // Failed to load config file - use default config
-        console.warn(`\nWARNING! Failed to load DHIS config:`, e.message);
-        console.info('Using default config');
-        dhisConfig = {
-            baseUrl: 'http://localhost:8080/',
-            authorization: 'Basic YWRtaW46Q2xhdmUqMTIzNDU2', // admin:district
-        };
-    }
-    
+    // Failed to load config file - use default config
+    console.warn(`\nWARNING! Failed to load DHIS config:`, e.message);
+    dhisConfig = {
+        baseUrl: 'http://localhost:8080/',
+        authorization: 'Basic YWRtaW46Q2xhdmUqMTIzNDU2', // admin:district
+    };
 }
 
-console.log(JSON.stringify(dhisConfig, null, 2), '\n');
+const HTMLWebpackPlugin = require('html-webpack-plugin');
+const scriptPrefix = (isDevBuild ? dhisConfig.baseUrl : '..');
 
 function log(req, res, opt) {
     req.headers.Authorization = dhisConfig.authorization;
@@ -38,80 +29,110 @@ function log(req, res, opt) {
 
 const webpackConfig = {
     context: __dirname,
-    contentBase: __dirname,
     entry: './src/app.js',
     devtool: 'source-map',
+    mode: 'development',
     output: {
         path: __dirname + '/build',
-        filename: 'app.js',
-        publicPath: 'http://localhost:8081/',
+        filename: 'sharingsetting.js',
+        publicPath: isDevBuild ? 'http://localhost:8081/' : './',
     },
     module: {
-        loaders: [
+        rules: [
             {
                 test: /\.jsx?$/,
                 exclude: /node_modules/,
-                loader: 'babel',
+                loader: 'babel-loader',
                 query: {
-                    presets: ['es2015', 'stage-0', 'react'],
                 },
             },
             {
                 test: /\.css$/,
-                loader: 'style!css',
+                loader: 'style-loader!css-loader',
             },
             {
                 test: /\.scss$/,
-                loader: 'style!css!sass',
+                loader: 'style-loader!css-loader!sass-loader',
             },
         ],
     },
     resolve: {
         alias: {
             react: path.resolve('./node_modules/react'),
-            'material-ui': path.resolve('./node_modules/material-ui')
+            'material-ui': path.resolve('./node_modules/material-ui'),
         },
     },
+    externals: [
+        {
+            'react': 'var React',
+            'react-dom': 'var ReactDOM',
+            'react-addons-transition-group': 'var React.addons.TransitionGroup',
+            'react-addons-create-fragment': 'var React.addons.createFragment',
+            'react-addons-update': 'var React.addons.update',
+            'react-addons-pure-render-mixin': 'var React.addons.PureRenderMixin',
+            'react-addons-shallow-compare': 'var React.addons.ShallowCompare',
+            'rx': 'var Rx',
+            'lodash': 'var _',
+        },
+        /^react-addons/,
+        /^react-dom$/,
+        /^rx$/,
+
+    ],
+    plugins: [
+        new HTMLWebpackPlugin({
+            template: './index.html',
+            vendorScripts: [
+                "polyfill.min.js",
+                `${scriptPrefix}/dhis-web-core-resource/react-15/react-15${isDevBuild ? '' : '.min'}.js`,
+                `${scriptPrefix}/dhis-web-core-resource/rxjs/4.1.0/rx.all${isDevBuild ? '' : '.min'}.js`,
+                `${scriptPrefix}/dhis-web-core-resource/lodash/4.15.0/lodash${isDevBuild ? '' : '.min'}.js`,
+            ]
+                .map(script => {
+                    if (Array.isArray(script)) {
+                        return (`<script ${script[1]} src="${script[0]}"></script>`);
+                    }
+                    return (`<script src="${script}"></script>`);
+                })
+                .join("\n"),
+        })
+    ],
     devServer: {
-        progress: true,
-        colors: true,
         port: 8081,
         inline: true,
         compress: true,
         proxy: [
-            { path: 'api/*', target: dhisConfig.baseUrl, bypass: log },
-            { path: 'dhis-web-commons/*', target: dhisConfig.baseUrl, bypass: log },
-            { path: 'icons/*', target: dhisConfig.baseUrl, bypass: log },
-            { path: '/css/*', target: 'http://localhost:8081/build', bypass: log },
-            { path: '/jquery.min.js', target: 'http://localhost:8081/node_modules/jquery/dist', bypass: log },
             { path: '/polyfill.min.js', target: 'http://localhost:8081/node_modules/babel-polyfill/dist', bypass: log },
+            { path: '/api/*', target: dhisConfig.baseUrl, bypass: log },
+            { path: '/dhis-web-commons/**', target: dhisConfig.baseUrl, bypass: log },
+            { path: '/icons/*', target: dhisConfig.baseUrl, bypass: log },
         ],
     },
 };
 
 if (!isDevBuild) {
-    webpackConfig.plugins = [
+    webpackConfig.plugins.push(
         // Replace any occurance of process.env.NODE_ENV with the string 'production'
         new webpack.DefinePlugin({
             'process.env.NODE_ENV': '"production"',
             DHIS_CONFIG: JSON.stringify({}),
-        }),
-        new webpack.optimize.DedupePlugin(),
-        new webpack.optimize.OccurenceOrderPlugin(),
+        })
+    );
+    webpackConfig.plugins.push(
+        new webpack.optimize.OccurrenceOrderPlugin()
+    );
+    webpackConfig.plugins.push(
         new webpack.optimize.UglifyJsPlugin({
-            //     compress: {
-            //         warnings: false,
-            //     },
             comments: false,
-            beautify: true,
-        }),
-    ];
+            sourceMap: true,
+        })
+    );
 } else {
-    webpackConfig.plugins = [
+    webpackConfig.plugins.push(
         new webpack.DefinePlugin({
             DHIS_CONFIG: JSON.stringify(dhisConfig)
-        }),
-    ];
+        })
+    );
 }
 
 module.exports = webpackConfig;

@@ -1,9 +1,9 @@
 import React from 'react';
 
-import FloatingActionButton from 'material-ui/lib/floating-action-button';
-import FontIcon from 'material-ui/lib/font-icon';
-import FlatButton from 'material-ui/lib/flat-button';
-import Dialog from 'material-ui/lib/dialog';
+import FloatingActionButton from 'material-ui/FloatingActionButton';
+import FontIcon from 'material-ui/FontIcon';
+import FlatButton from 'material-ui/FlatButton';
+import Dialog from 'material-ui/Dialog';
 
 import AppTheme from '../colortheme';
 
