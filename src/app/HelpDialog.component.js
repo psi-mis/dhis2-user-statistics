@@ -5,8 +5,6 @@ import FontIcon from 'material-ui/FontIcon';
 import FlatButton from 'material-ui/FlatButton';
 import Dialog from 'material-ui/Dialog';
 
-import AppTheme from '../colortheme';
-
 export default React.createClass({
     getInitialState: function() {
       return { open: false };
@@ -22,7 +20,7 @@ export default React.createClass({
         <FlatButton label="Close" primary={true} onTouchTap={this.handleClose} />
       ];
       return (
-        <div className="helpButton">
+        <div>
           <FloatingActionButton mini={true} onTouchTap={this.handleOpen} secondary={true}>
             <FontIcon className="material-icons">help</FontIcon>
           </FloatingActionButton>

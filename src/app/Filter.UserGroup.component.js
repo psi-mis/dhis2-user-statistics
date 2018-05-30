@@ -2,13 +2,11 @@ import React from 'react';
 
 import { getInstance } from 'd2/lib/d2';
 import FontIcon from 'material-ui/FontIcon';
-import CircularProgress from 'material-ui/CircularProgress';
 import TextField from 'material-ui/TextField';
 import FlatButton from 'material-ui/FlatButton';
 import {List, ListItem} from 'material-ui/List';
 import Checkbox from 'material-ui/Checkbox';
 
-import AppTheme from '../colortheme';
 
 // TODO: Rewrite as ES6 class
 /* eslint-disable react/prefer-es6-class */
@@ -116,7 +114,7 @@ export default React.createClass({
                 value={this.state.filterName}
               />
               <FlatButton label="Clear all" primary={true} onClick={this.clearAllChecked} />
-            <div style={{height:'280px',overflowY:'scroll'}}>
+            <div style={{height:'150px',overflowY:'scroll'}}>
                 {/* List of user groups whith checkbox */}
                 {this.getUserGroups()}           
             </div>

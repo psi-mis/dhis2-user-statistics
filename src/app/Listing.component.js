@@ -13,39 +13,15 @@ import CircularProgress from 'material-ui/CircularProgress';
 
 import SelectField from 'material-ui/SelectField';
 import MenuItem from 'material-ui/MenuItem';
-import Checkbox from 'material-ui/Checkbox';
+import CheckboxUI from 'material-ui/Checkbox';
 import TextField from 'material-ui/TextField';
 import Slider from 'material-ui/Slider';
 import { green500, red500 } from 'material-ui/styles/colors';
 
 import FilterBy from './Filter.component.js';
 
-import AppTheme from '../colortheme';
 import HelpDialog from './HelpDialog.component';
 import actions from '../actions';
-
-const help = {
-  help: (
-    <div>
-      <p>
-        This app provides a convenient interface to audit user accounts within your DHIS2 application.
-      </p>
-      <h1>Listing</h1>
-      <p>
-        Simple tool to list users with certain audit parameters to facilitate better user management.
-      </p>
-      <p>
-        Features:
-      </p>
-      <ul style={{ listStyle: 'none' }}>
-        <li>Listing users who have logged in the past X days</li>
-        <li>Listing users who have not logged in the past X days</li>
-      </ul>
-      <h3>Note</h3>
-      <p>Choosing to <i>Include Child OUs</i> may <b>dramatically</b> slow down your system depending on how high up in the tree you are searching.</p>
-    </div>
-  ),
-}
 
 // TODO: Rewrite as ES6 class
 /* eslint-disable react/prefer-es6-class */
@@ -81,6 +57,7 @@ export default React.createClass({
       processing: false,
       errors: '',
       pager: { page: 0, pageCount: 0, pageSize: 0, total: 0 },
+      userGroupsFiltered: {}
     };
   },
 
@@ -178,13 +155,47 @@ export default React.createClass({
   handleFilterChange(filterBy, value) {
     //toggle the search children box if they switch from group to ou
     let searchChildren = false;
-    if (this.state.filterBy === 'ou') {
-      searchChildren = this.state.searchChildOUs;
-    }
 
-    this.setState({ filter: value, filterBy: filterBy, searchChildOUs: searchChildren });
-    this.getChildOUs();
+    this.setState({
+      filterBy
+    })
+
+    if (this.state.filterBy === 'ou') {
+        searchChildren = this.state.searchChildOUs;
+        this.setState({ filter: value, filterBy: filterBy, searchChildOUs: searchChildren });
+        this.getChildOUs();
+    }
+    else{
+      this.handleFilterChangeUserGRoup(filterBy, value);
+    }
   },
+
+
+    //THey want to show a specific User group or org here
+    handleFilterChangeUserGRoup(filterBy, value) {
+      //console.log("CUSTOM CHART:", value);
+      //disable the button when is processing request
+      
+      if (value !== null) {
+          let filtered = this.state.userGroupsFiltered;
+          //if already there exist the uid then delete it from filter selected
+          if(filtered[value]){
+            delete filtered[value]
+          }
+          else{
+              filtered[value] = {
+                id: value
+              };
+          }
+         //console.log(Object.keys(filtered).length);
+         this.setState({
+           userGroupsFiltered: filtered,
+           filterBy:'group'
+         })
+        }
+    },
+
+    
   ClearFilters() {
     this.setState({ filterUsername: "" });
     this.setState({ filterBy: 'none' });
@@ -259,7 +270,13 @@ export default React.createClass({
       search.ou = this.state.filter;
     }
     if (this.state.filterBy === 'group' && this.state.filter !== false && this.state.filterstatus==true) {
-      search.filter = ['userGroups.id:eq:' + this.state.filter];
+        let listUG="";
+        for(let gs in this.state.userGroupsFiltered){
+          listUG=(listUG==""?gs:listUG+","+gs)
+        }
+        if(listUG!=""){
+          search.filter = ['userGroups.id:in:[' + listUG+"]"];
+        }         
     }
     if (this.state.filterUsername !== '' && this.state.filterstatus==true) {
       search.query = this.state.filterUsername;
@@ -322,12 +339,14 @@ export default React.createClass({
     const d2 = this.props.d2;
     let users = this.state.data.map((row) => {
       //Do some filtering...
-      if (this.state.filterBy === 'group') {
+      if (this.state.filterBy === 'group' && Object.keys(this.state.userGroupsFiltered).length>0) {
         let found = false;
         for (let g of row.userGroups) {
-          if (g.id === this.state.filter) {
+          for(let gs in this.state.userGroupsFiltered){
+          if (g.id === gs) {
             found = true;
           }
+        }
         }
         if (found === false) {
           return null;
@@ -375,18 +394,16 @@ export default React.createClass({
 
     return (
       <div className="wrapper">
-        <HelpDialog style={{ float: "right" }} title={"App Help"} content={help.help} />
-
-        <Paper className='paper' style={{ 'minWidth': '50%' }}>
+        <Paper className='paper' style={{ 'minWidth': '60%' }}>
           <h3 className="subdued title_description">{d2.i18n.getTranslation('app_title_filter')}</h3>
 
-          <div style={{ 'width': '40%', 'float': 'left' }}>
-            <Checkbox label="Show Disabled Accounts"
+          <div style={{ 'width': '60%', 'float': 'left' }}>
+            <CheckboxUI label={d2.i18n.getTranslation("app_lbl_filter_account_disabled")}
               checked={this.state.filterDisabled}
               onCheck={this.handleFilterDisabled}
               labelStyle={{ color: 'grey', fontSize: 'small' }}              
               />
-            <Checkbox label="Include Child OUs"
+            <CheckboxUI label={d2.i18n.getTranslation("app_lbl_filter_include_child_ou")}
               checked={this.state.searchChildOUs}
               onCheck={this.handleFilterChildOUs}
               disabled={this.state.filterBy != 'ou' || this.state.ouRoot.id === this.state.filter}
@@ -400,10 +417,10 @@ export default React.createClass({
             />
             {(this.state.processing === true) ? <CircularProgress /> : null}
           </div>
-          <div style={{ 'width': '10%', 'float': 'left' }}>
+          <div style={{ 'width': '20%', 'float': 'left' }}>
           </div>
-          <div style={{ 'width': '50%', 'float': 'left' }}>
-            <Checkbox label="Filters"
+          <div style={{ 'width': '30%', 'float': 'left' }}>
+            <CheckboxUI label="Filters"
               checked={this.state.filterstatus}
               onCheck={this.handlefilterstatus}
               labelStyle={{ color: 'grey', fontSize: 'small' }} />
@@ -428,7 +445,6 @@ export default React.createClass({
                 defaultValue={30}
                 min={1}
                 max={180}
-                autoWidth={true}
                 onChange={this.handleLengthChange}
                 disabled={!this.state.filterstatus}
                 style={{ marginBottom: '0px' }}

@@ -15,7 +15,7 @@ try {
     console.warn(`\nWARNING! Failed to load DHIS config:`, e.message);
     dhisConfig = {
         baseUrl: 'http://localhost:8080/',
-        authorization: 'Basic YWRtaW46Q2xhdmUqMTIzNDU2', // admin:district
+        authorization: 'Basic YWRtaW46ZGlzdHJpY3Q=', // admin:district
     };
 }
 
@@ -84,6 +84,7 @@ const webpackConfig = {
             template: './index.html',
             vendorScripts: [
                 "polyfill.min.js",
+                "jquery.min.js",
                 `${scriptPrefix}/dhis-web-core-resource/react-15/react-15${isDevBuild ? '' : '.min'}.js`,
                 `${scriptPrefix}/dhis-web-core-resource/rxjs/4.1.0/rx.all${isDevBuild ? '' : '.min'}.js`,
                 `${scriptPrefix}/dhis-web-core-resource/lodash/4.15.0/lodash${isDevBuild ? '' : '.min'}.js`,
@@ -105,6 +106,7 @@ const webpackConfig = {
             { path: '/polyfill.min.js', target: 'http://localhost:8081/node_modules/babel-polyfill/dist', bypass: log },
             { path: '/api/*', target: dhisConfig.baseUrl, bypass: log },
             { path: '/dhis-web-commons/**', target: dhisConfig.baseUrl, bypass: log },
+            { path: '/jquery.min.js', target: 'http://localhost:8081/node_modules/jquery/dist', bypass: log },
             { path: '/icons/*', target: dhisConfig.baseUrl, bypass: log },
         ],
     },

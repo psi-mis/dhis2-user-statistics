@@ -35,7 +35,7 @@ export default React.createClass({
 
   updateChart(groups) {
     //
-    console.log(groups);
+    //console.log(groups);
     this.createEmtyChat();
     //
     for (let g of Object.keys(groups)) {

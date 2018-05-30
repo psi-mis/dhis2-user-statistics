@@ -5,8 +5,7 @@ import OrgUnitTree from 'd2-ui/lib/org-unit-tree/OrgUnitTree.component';
 
 import SelectField from 'material-ui/SelectField';
 import MenuItem from 'material-ui/MenuItem';
-
-import AppTheme from '../colortheme';
+import FilterGroup from './Filter.UserGroup.component.js';
 
 // TODO: Rewrite as ES6 class
 /* eslint-disable react/prefer-es6-class */
@@ -15,9 +14,10 @@ export default React.createClass({
     propTypes: {
         d2: React.PropTypes.object,
         groups: React.PropTypes.object.isRequired,
-        //ouRoot: React.PropTypes.object.isRequired,
+        ouRoot: React.PropTypes.object.isRequired,
         onFilterChange: React.PropTypes.func.isRequired,
-        disabledFilter: React.PropTypes.func.isRequired,
+        //disabledFilter: React.PropTypes.func.isRequired,
+
     },
 
     contextTypes: {
@@ -26,11 +26,14 @@ export default React.createClass({
 
     getInitialState() {
         return {
-          filterBy:'none',    // none, group, ou
-          filter:null,
+          filterBy:'none', 
+          filter:null,   // none, group, ou
+          selected:[],
           ouRoot:null,        // top of the OU tree, needed for OrgUnitTree
           userGroups:{},      // all user groups, needed for filter
           disabledFilter:true,
+          userGroupsFiltered: {},
+          processing:false,
         };
     },
 
@@ -54,28 +57,48 @@ export default React.createClass({
         our = nextProps.ouRoot;
       }
       this.setState({
+        filterBy:nextProps.value,
         userGroups:nextProps.groups,
         ouRoot:our,
         disabledFilter:nextProps.disabledFilter
       });
     },
-
+    clearAllSelected(){
+      this.setState({userGroupsFiltered:{}});
+      this.props.onFilterChange('none',null);
+    },
     //update how they want to filter the data
     handleFilterChange(event, index, value){
-      this.setState({filter:null,filterBy:value});
+      this.setState({selected:[],filterBy:value});
       this.props.onFilterChange(value,null);
+    },
+    handleFilterChangeGroups(filterby, value){
+        this.props.onFilterChange(filterby, value);
     },
 
     //Clicking on the org tree
-    handleSelectedOrgUnit(event, model) {
+    handleSelectedOrgUnitAnt(event, model) {
       if (this.state.ouRoot.id===model.id){
         return;
       }
       this.setState({
-          filter: (model.id === this.state.filter)?null:model.id,
+          filter: [(model.id === this.state.filter[0])?[]:model.path],
       });
       this.props.onFilterChange(this.state.filterBy,(model.id === this.state.filter)?null:model.id);
     },
+
+    handleSelectedOrgUnit(event, orgUnit) {
+      this.setState(state => {
+          if (state.selected[0] === orgUnit.path) {
+              return { selected: [] };
+          }
+
+          return { selected: [orgUnit.path] };
+      });
+      this.props.onFilterChange(this.state.filterBy,(orgUnit.id === this.state.selected[0])?null:orgUnit.id);
+
+  },
+
 
     //Clicking on the org tree
     handleGroupChange(event, index, value) {
@@ -91,9 +114,9 @@ export default React.createClass({
           return (
             <OrgUnitTree
               root={this.state.ouRoot}
-              onClick={this.handleSelectedOrgUnit}
-              selected={[this.state.filter]}
-              selectedLabelStyle={{fontWeight:'bold'}}
+              onSelectClick={this.handleSelectedOrgUnit}
+              selected={this.state.selected}
+              hideCheckboxes
             />
           );
       }
@@ -103,19 +126,14 @@ export default React.createClass({
     //Show the available User groups
     getUserGroups(){
       if (this.state.filterBy === 'group'){
-        let groups = [];
-        for (let i of Object.keys(this.state.userGroups)){
-          groups.push(<MenuItem value={this.state.userGroups[i].id} key={i} primaryText={this.state.userGroups[i].displayName} />);
-        }
         return (
-          <SelectField
-            floatingLabelText="Group"
-            value={this.state.filter}
-            onChange={this.handleGroupChange}
-            autoWidth= {true}
-          >
-          {groups}
-        </SelectField>
+          <FilterGroup value={this.state.filterBy}
+          onFilterChange={this.handleFilterChangeGroups}
+          groups={this.props.groups}
+          groupsfiltered={this.state.userGroupsFiltered}
+          disabled={this.state.processing}
+          clearSelected={this.clearAllSelected}
+        />
         );
       }
       return null;

@@ -1,6 +1,6 @@
 const dhisDevConfig = DHIS_CONFIG; // eslint-disable-line
 if (process.env.NODE_ENV !== 'production') {
-    //jQuery.ajaxSetup({ headers: { Authorization: dhisDevConfig.authorization } }); // eslint-disable-line
+    jQuery.ajaxSetup({ headers: { Authorization: dhisDevConfig.authorization } }); // eslint-disable-line
 }
 
 import React from 'react';

@@ -10,7 +10,7 @@ import Chip from 'material-ui/Chip';
 import Avatar from 'material-ui/Avatar';
 import { teal600, grey300, grey50, grey900 } from 'material-ui/styles/colors';
 
-import AppTheme from '../colortheme';
+import AppTheme from '../theme';
 import actions from '../actions';
 import '../translationRegistration';
 
@@ -20,18 +20,68 @@ import Listing from './Listing.component.js';
 import ListingInterpretation from './ListingInterpretation.component.js';
 import Dashboard from './Dashboard.component.js';
 import DashboardInterpretation from './DashboardInterpretation.component.js';
+import HelpDialog from './HelpDialog.component';
+const DASH_USERGROUPS_CODE = 'BATapp_ShowOnDashboard';
+const help = {
+  help: (
+    <div>
+      <p>
+        This app provides a convenient interface to audit user accounts within your DHIS2 application.
+      </p>
+      <h1>Listing</h1>
+      <p>
+        Simple tool to list users with certain audit parameters to facilitate better user management.
+      </p>
+      <p>
+        Features:
+      </p>
+      <ul style={{ listStyle: 'none' }}>
+        <li>Listing users who have logged in the past X days</li>
+        <li>Listing users who have not logged in the past X days</li>
+      </ul>
+      <h3>Note</h3>
+      <p>Choosing to <i>Include Child OUs</i> may <b>dramatically</b> slow down your system depending on how high up in the tree you are searching.</p>
+      <br/>
+      <h1>
+        Summary metrics on user status.
+      </h1>
+      <p>
+        <b>Login Status By Group</b> will show user groups that have the <i>{DASH_USERGROUPS_CODE}</i> attribute assigned.
+      </p>
+      
+      <p>
+        Additional User Groups may be selected from the dropdown box.
+      </p>
+      <h3>Setup</h3>
+      <ul>
+          <li>Open the <b>Maintenance</b> app</li>
+          <li>Find the <b>Attribute</b> section</li>
+          <li>If it does not exist, create a new Attribute with <i>{DASH_USERGROUPS_CODE}</i> as the code. The name does not matter.</li>
+          <li>Set the <b>Value type</b> to be <i>Yes/No</i></li>
+          <li>Click the checkbox for <i>User group</i>, then Save</li>
+          <li>Open the <b>Users</b> app and give particular user groups this attribute.</li>
+      </ul>
+      <h3>Notes</h3>
+      <ul>
+        <li>For this app to function as intended, Non-SuperUsers must have a role containing "View User Group Managing Relationships".</li>
+        <li>For speed considerations the number of User Groups with the {DASH_USERGROUPS_CODE} attribute should be kept under 20 but may be more or less depending on the speed of your connection and DHIS2 server.</li>
+      </ul>
+    
+    </div>
+  ),
+}
+
 
 const style = {
   paper: {
     height: 65,
     margin: -20,
-    width: '130%',
+    width: '110%',
     textAlign: 'center',
     marginTop: 50
   },
   paperContent: {
-    height: '80%',
-    width: '80%',
+    width: '95%',
     marginTop: 20,
     marginLeft: 10
 
@@ -54,20 +104,27 @@ const style = {
   },
   container: {
     display: 'grid',
-    gridTemplateColumns: '25% auto',
-    alignItems: 'end'
+    gridTemplateColumns: '20% auto 5% 8%',
+    alignItems: 'start'
   },
   item: {
-    padding: 20,
-    justifySelf: 'start'
+    padding:20,
+    justifySelf: 'start',
+    marginLeft: 10,
+    fontWeight: 'bold'
+
+  },
+  itemHelp:{
+    alignSelf: 'center'
   }
+
 };
 
 const sections = [
-  { key: 'dUser', icon: 'dashboard', label: 'app_dashboard_user_access' },
-  { key: 'lUser', icon: 'listing', label: 'app_listing_user_access' },
-  { key: 'dInt', icon: 'dashboard', label: 'app_dashboard_user_interpretation' },
-  { key: 'LInt', icon: 'listing', label: 'app_listing_user_interpretation' },
+  { key: 'dUser', icon: 'insert_chart_outlined', label: 'app_dashboard_user_access' },
+  { key: 'lUser', icon: 'view_list', label: 'app_listing_user_access' },
+  { key: 'dInt', icon: 'insert_chart_outlined', label: 'app_dashboard_user_interpretation' },
+  { key: 'LInt', icon: 'view_list', label: 'app_listing_user_interpretation' },
 ];
 
 export default React.createClass({
@@ -142,7 +199,7 @@ export default React.createClass({
     const api = d2.Api.getApi();
     try {
       //get OU tree rootUnit
-      let rootLevel = await d2.models.organisationUnits.list({ paging: false, level: 1, fields: 'id,displayName,children::isNotEmpty' });
+      let rootLevel = await d2.models.organisationUnits.list({ paging: false, level: 1, fields: 'id,path,displayName,children[id,path,displayName,children::isNotEmpty]' });
       if (rootLevel) {
         return rootLevel.toArray()[0];
       }
@@ -264,21 +321,25 @@ export default React.createClass({
       <div>
         <HeaderBar />
         <Paper style={style.paper} zDepth={2}>
+       
           <div style={style.container}>
-            <div style={style.item}>
-              {d2.i18n.getTranslation('app_name')}
+            <div style={style.item}>            
+             {d2.i18n.getTranslation('app_name')}
             </div>
             <div style={style.itemChips}>
               {sections.map(this.renderChip, this)}
+            </div>
+            <div style={style.itemHelp}>
+            <HelpDialog title={"App Help"} content={help.help} />
             </div>
           </div>
         </Paper>
         <div style={style.titleSection}>
             {d2.i18n.getTranslation(sections.filter(section => section.key == this.state.chipSelected)[0].label)}
           </div>
-        <Paper style={style.paperContent} zDepth={1}>
+        <div style={style.paperContent}>
           {this.renderSection(this.state.chipSelected)}
-        </Paper>
+        </div>
 
       </div>
 

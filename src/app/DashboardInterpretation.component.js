@@ -11,7 +11,6 @@ import FontIcon from 'material-ui/FontIcon';
 
 import { green300, lime300, lightGreen300, yellow300, orange300, deepOrange300, red300 } from 'material-ui/styles/colors';
 
-import AppTheme from '../colortheme';
 import actions from '../actions';
 
 import ChartInterpretation from './Chart.component';
@@ -358,12 +357,12 @@ export default React.createClass({
       />
       <br/>
       <RaisedButton
-        label="See report"
+        label={d2.i18n.getTranslation("app_btn_update")}
         labelPosition="before"
         primary={true}
         disabled={this.state.processing}
         onClick={this.seeReport}
-        icon={<FontIcon className="material-icons">play_for_work</FontIcon>}
+        icon={<FontIcon className="material-icons">refresh</FontIcon>}
         style={{ 'clear': 'both' }}
       />
        {this.state.processing?<CircularProgress size={1} style={{ float: 'right' }} />:""}

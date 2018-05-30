@@ -11,11 +11,10 @@ import FontIcon from 'material-ui/FontIcon';
 
 import { green300,lime300, lightGreen300, yellow300, orange300, deepOrange300, red300 } from 'material-ui/styles/colors';
 
-import AppTheme from '../colortheme';
 import actions from '../actions';
 
 import ChartLogins from './Chart.component';
-import FilterBy from './Filter.UserGroup.component.js';
+import FilterGroups from './Filter.UserGroup.component.js';
 
 import LoadingMask from 'd2-ui/lib/loading-mask/LoadingMask.component';
 //the day ranges for displaying data
@@ -261,23 +260,22 @@ export default React.createClass({
     return (
     <div className="wrapper">
 
-    <Paper style={{ 'width': '35%', 'float': 'right', 'padding': '5px', 'height': '480px' }}>
-      <p>Select user groups:</p>
-      <FilterBy value={this.state.filterBy}
+    <Paper style={{ 'width': '35%', 'float': 'right', 'padding': '5px' }}>
+      <p>{d2.i18n.getTranslation("app_ttl_filterUser")}</p>
+      <FilterGroups value={this.state.filterBy}
         onFilterChange={this.handleFilterChange}
         groups={this.props.groups}
         groupsfiltered={this.state.userGroupsFiltered}
         disabled={this.state.processing}
         clearSelected={this.clearAllSelected}
       />
-         <br/>
       <RaisedButton
-        label="See report"
+        label={d2.i18n.getTranslation("app_btn_update")}
         labelPosition="before"
         primary={true}
         disabled={this.state.processing}
         onClick={this.seeReport}
-        icon={<FontIcon className="material-icons">play_for_work</FontIcon>}
+        icon={<FontIcon className="material-icons">refresh</FontIcon>}
         style={{ 'clear': 'both' }}
       />
       {this.state.processing?<CircularProgress size={1} style={{ float: 'right' }} />:""}
@@ -285,7 +283,6 @@ export default React.createClass({
     </Paper>
 
     <Paper className='paper' style={{ 'width': '61%' }}>
-      <h3 className="subdued title_description">{d2.i18n.getTranslation('app_dashboard_user_access')}</h3>
 
       <ChartLogins container='chartGroups' options={options_groups} groups={this.state.userGroupsFiltered} renderChart={this.state.renderChart}/>
 

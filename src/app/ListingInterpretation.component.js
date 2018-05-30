@@ -17,35 +17,9 @@ import { green500, red500 } from 'material-ui/styles/colors';
 
 import FilterBy from './Filter.component.js';
 
-import AppTheme from '../colortheme';
-import HelpDialog from './HelpDialog.component';
+
 import actions from '../actions';
 
-
-
-
-const help = {
-  help: (
-    <div>
-      <p>
-        This app provides a convenient interface to audit user accounts within your DHIS2 application.
-      </p>
-      <h1>Listing</h1>
-      <p>
-        Simple tool to list users with certain audit parameters to facilitate better user management.
-      </p>
-      <p>
-        Features:
-      </p>
-      <ul style={{ listStyle: 'none' }}>
-        <li>Listing users who have logged in the past X days</li>
-        <li>Listing users who have not logged in the past X days</li>
-      </ul>
-      <h3>Note</h3>
-      <p>Choosing to <i>Include Child OUs</i> may <b>dramatically</b> slow down your system depending on how high up in the tree you are searching.</p>
-    </div>
-  ),
-}
 
 // TODO: Rewrite as ES6 class
 /* eslint-disable react/prefer-es6-class */
@@ -65,15 +39,14 @@ export default React.createClass({
     return {
       ouRoot: {},
       userGroups: {},
-      userGroupsSelected: [],
-      userGroupsSelectedNamed: [],
+      userGroupsFiltered:{},
       type: 'commInt',       // commInt (show comment and interpretation)
       filterBy: 'none',    // none, group, ou
       data: [],
       tags: [],
       suggestions: [],
       pager: { page: 0, pageCount: 0, pageSize: 0, total: 0 },
-      disabledfiter:true
+      disabledfiter:false
     };
   },
   //make sure we have our necessary select box data
@@ -96,22 +69,7 @@ export default React.createClass({
   ClearFilters() {
     this.setState({ filterUsername: "" });
     this.setState({ type: "commInt" });
-    this.setState({disabledfiter:true});
-  },
-  //add groups 
-  addGroups(uid) {
-    this.state.data.map((row) => {
-      row.userGroups.map((Group) => {
-        if (Group.id == uid) {
-          this.state.userGroupsSelected.push({ id: uid });
-          //this.state.userGroupsSelectedNamed[uid]={name:this.state.userGroups[uid].displayName};
-          var index = this.state.userGroupsSelectedNamed.findIndex(x => x.id === uid);
-          if (index === -1)
-            this.state.userGroupsSelectedNamed.push({ id: uid, name: this.state.userGroups[uid].displayName });
-        }
-      });
-    });
-
+    this.setState({disabledfiter:false});
   },
   //agregate API result
   aggregateResult(dataValues) {
@@ -186,7 +144,7 @@ export default React.createClass({
         this.setState({
           data: [],
           processing: false,
-          disabledfiter:true
+          disabledfiter:false
         })
       }
     })
@@ -195,21 +153,31 @@ export default React.createClass({
       });
 
   },
+
   //update how they want to filter the data
   handleFilterChange(filterBy, value) {
     //toggle the search children box if they switch from group to ou
     let searchChildren = false;
-    if (this.state.filterBy === 'ou') {
-      searchChildren = this.state.searchChildOUs;
-    }
-    else {
-      if (value)
-        this.addGroups(value);
-    }
 
-    this.setState({ filter: value, filterBy: filterBy, searchChildOUs: searchChildren });
-    //this.getChildOUs();
+    this.setState({
+      filterBy
+    })
+
+    if (this.state.filterBy === 'ou') {
+        searchChildren = this.state.searchChildOUs;
+        this.setState({ filter: value, filterBy: filterBy, searchChildOUs: searchChildren });
+        this.getChildOUs();
+    }
+    else if (this.state.filterBy === 'group'){
+      this.handleFilterChangeUserGRoup(filterBy, value);
+    }
+    else{
+      this.setState({
+        userGroupsFiltered:{}
+      })
+    }
   },
+
   ClearFilters() {
     this.setState({ filterUsername: "" });
     this.setState({ filterBy: 'none' });
@@ -217,8 +185,6 @@ export default React.createClass({
     this.setState({ type: 'stale' });
     this.setState({ searchChildOUs: false });
     this.setState({ filterDisabled: false });
-    this.setState({ userGroupsSelected: [] });
-    this.setState({ userGroupsSelectedNamed: [] });
   },
 
   //Include Child OUs checkbox
@@ -228,6 +194,61 @@ export default React.createClass({
     }
     this.setState({ searchChildOUs: value });
    // this.getChildOUs();
+  },
+  async getChildOUs() {
+    if (this.state.filterBy === 'ou' && this.state.searchChildOUs === true && this.state.ouRoot.id !== this.state.filter && this.state.filter !== null) {
+      this.setState({ processing: true });
+      this.getOrgChildren(this.state.filter).then(children => {
+        this.setState({ orgChildren: children, processing: false });
+      });
+    }
+  },
+
+  //recursively find all children of id. return array of IDs
+  async getOrgChildren(id) {
+    const d2 = this.props.d2;
+    let nodes = [id];
+    let m = await d2.models.organisationUnits.get(id);
+    if (m.id === id) {
+      if (m.hasOwnProperty('children') && m.children !== undefined) {
+        if (m.children.size === 0) {
+          return nodes;
+        }
+        for (let child of m.children) {
+          let c = await this.getOrgChildren(child[0]);
+          nodes = nodes.concat(c);
+        }
+        return nodes;
+      }
+      else {   //other way to get no children
+        return nodes;
+      }
+    }
+    return nodes;
+  },
+
+  //THey want to show a specific User group or org here
+  handleFilterChangeUserGRoup(filterBy, value) {
+    //console.log("CUSTOM CHART:", value);
+    //disable the button when is processing request
+    
+    if (value !== null) {
+        let filtered = this.state.userGroupsFiltered;
+        //if already there exist the uid then delete it from filter selected
+        if(filtered[value]){
+          delete filtered[value]
+        }
+        else{
+            filtered[value] = {
+              id: value
+            };
+        }
+        //console.log(Object.keys(filtered).length);
+        this.setState({
+          userGroupsFiltered: filtered,
+          filterBy:'group'
+        })
+      }
   },
 
   // async getChildOUs() {
@@ -273,11 +294,12 @@ export default React.createClass({
     let users = this.state.data.map((row) => {
       //Filters done, display records
       //Do some filtering...
-      if (this.state.filterBy === 'group' && this.state.userGroupsSelected.length > 0) {
+      if (this.state.filterBy === 'group' && Object.keys(this.state.userGroupsFiltered).length > 0) {
         let found = false;
         for (let g of row.userGroups) {
-          for (let u of this.state.userGroupsSelected) {
-            if (g.id === u.id) {
+          for (let u in this.state.userGroupsFiltered) {
+            if (g.id === u) {
+              console.log(row)
               found = true;
             }
           }
@@ -323,8 +345,6 @@ export default React.createClass({
     });
     return (
       <div className="wrapper">
-        <HelpDialog style={{ float: "right" }} title={"App Help"} content={help.help} />
-
         <Paper className='paper' style={{ 'minWidth': '50%' }}>
           <h3 className="subdued title_description">{d2.i18n.getTranslation('app_title_filter_Interpretation')}</h3>
           <div style={{ 'width': '30%', 'float': 'left' }}>
@@ -334,7 +354,7 @@ export default React.createClass({
               value={this.state.filterUsername}
               disabled={this.state.disabledfiter}
               onChange={this.handleUserChange} />
-            <Checkbox label="Include Child OUs"
+            <Checkbox label={d2.i18n.getTranslation("app_lbl_filter_include_child_ou")}
               checked={this.state.searchChildOUs}
               onCheck={this.handleFilterChildOUs}
               disabled={this.state.filterBy != 'ou' || this.state.ouRoot.id === this.state.filter || this.props.disabledfiter==true}
@@ -378,20 +398,6 @@ export default React.createClass({
                       icon={<FontIcon className="material-icons">settings_backup_restore</FontIcon>}
                       style={{ 'clear': 'both', 'float': 'left' }}
                     />
-                  </td>
-                </tr>
-                <tr>
-                  <td colSpan="2">
-                    <div style={{ 'overflowY': 'scroll', 'height': '100px' }}>
-                      <ul>
-                        {this.state.userGroupsSelectedNamed.map((gname) => {
-
-                          return (
-                            <li>{gname.name}</li>
-                          );
-                        })}
-                      </ul>
-                    </div>
                   </td>
                 </tr>
               </tbody>
