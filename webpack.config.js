@@ -1,6 +1,7 @@
 'use strict';
 
 const webpack = require('webpack');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const path = require('path');
 const colors = require('colors');
 
@@ -37,6 +38,20 @@ const webpackConfig = {
         filename: 'sharingsetting.js',
         publicPath: isDevBuild ? 'http://localhost:8081/' : './',
     },
+    optimization: {
+        minimizer: [
+        new UglifyJsPlugin({
+            cache: true,
+            parallel: true,
+            uglifyOptions: {
+              compress: false,
+              ecma: 6,
+              mangle: true
+            },
+            sourceMap: true
+          })
+        ]
+      },
     module: {
         rules: [
             {
@@ -123,12 +138,7 @@ if (!isDevBuild) {
     webpackConfig.plugins.push(
         new webpack.optimize.OccurrenceOrderPlugin()
     );
-    webpackConfig.plugins.push(
-        new webpack.optimize.UglifyJsPlugin({
-            comments: false,
-            sourceMap: true,
-        })
-    );
+
 } else {
     webpackConfig.plugins.push(
         new webpack.DefinePlugin({

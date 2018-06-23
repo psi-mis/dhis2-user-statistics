@@ -112,12 +112,14 @@ export default React.createClass({
     getOUTree(){
       if (this.state.filterBy === 'ou'){
           return (
+            <div style={{height:'150px',overflowY:'scroll'}}>
             <OrgUnitTree
               root={this.state.ouRoot}
               onSelectClick={this.handleSelectedOrgUnit}
               selected={this.state.selected}
               hideCheckboxes
             />
+            </div>
           );
       }
       return null;
